@@ -105,6 +105,8 @@ public partial class BonSortieEditViewModel : BaseViewModel
     [ObservableProperty] private BonSortieLineRow? _selectedLine;
     [ObservableProperty] private string _addLineSearchText = string.Empty;
     [ObservableProperty] private object? _addLineCatalogPick;
+    [ObservableProperty] private string _promoLineSearchText = string.Empty;
+    [ObservableProperty] private object? _promoLineCatalogPick;
 
     [ObservableProperty] private string _btnPdf = string.Empty;
     [ObservableProperty] private string _btnPrint = string.Empty;
@@ -120,6 +122,7 @@ public partial class BonSortieEditViewModel : BaseViewModel
     [ObservableProperty] private string _lblDateEcheance = string.Empty;
     [ObservableProperty] private string _btnRemoveLine = string.Empty;
     [ObservableProperty] private string _lblCatalogHintFacture = string.Empty;
+    [ObservableProperty] private string _lblCatalogHintPromo = string.Empty;
     [ObservableProperty] private string _lblTotals = string.Empty;
     [ObservableProperty] private string _devise = string.Empty;
     [ObservableProperty] private string _totalHtLabel = string.Empty;
@@ -158,6 +161,7 @@ public partial class BonSortieEditViewModel : BaseViewModel
     public AutoCompleteFilterPredicate<object?> PartyAutocompleteFilter => PartyAutoComplete.ItemFilter;
 
     private bool _suppressAddLinePick;
+    private bool _suppressPromoLinePick;
 
     private void OnLineGridColumnsPropertyChanged(object? sender, PropertyChangedEventArgs e)
     {
@@ -184,6 +188,7 @@ public partial class BonSortieEditViewModel : BaseViewModel
         LblDateEcheance = _locale.T("Lbl_DateEcheance");
         BtnRemoveLine = _locale.T("Btn_RemoveLine");
         LblCatalogHintFacture = _locale.T("Lbl_CatalogHintFacture");
+        LblCatalogHintPromo = _locale.T("Lbl_CatalogHintPromo");
         LblTotals = _locale.T("Lbl_Totals");
         LblPaymentsRecorded = _locale.T("Lbl_PaymentsRecorded");
         LblMontant = _locale.T("Lbl_Montant");
@@ -346,22 +351,7 @@ public partial class BonSortieEditViewModel : BaseViewModel
     {
         if (_suppressAddLinePick) return;
         if (value is not GestionCommerciale.Modules.Stock.Models.Produit p) return;
-        _suppressAddLinePick = true;
-        var existing = Lignes.FirstOrDefault(l => l.ProduitId == p.Id && p.Id != 0);
-        if (existing != null)
-        {
-            existing.Quantite += 1;
-            SelectedLine = existing;
-        }
-        else
-        {
-            var row = new BonSortieLineRow();
-            row.ApplyCatalogProduct(p);
-            row.Quantite = 1;
-            row.PropertyChanged += LineChanged;
-            Lignes.Add(row);
-            SelectedLine = row;
-        }
+        var produitId = p.Id;
         DocumentLineSearchHelper.ClearAfterCatalogPick(() =>
         {
             _suppressAddLinePick = true;
@@ -369,12 +359,87 @@ public partial class BonSortieEditViewModel : BaseViewModel
             AddLineSearchText = string.Empty;
             _suppressAddLinePick = false;
         });
+        _ = AddPaidProductFromCatalogAsync(produitId);
+    }
+
+    partial void OnPromoLineCatalogPickChanged(object? value)
+    {
+        if (_suppressPromoLinePick) return;
+        if (value is not GestionCommerciale.Modules.Stock.Models.Produit p) return;
+        var produitId = p.Id;
+        DocumentLineSearchHelper.ClearAfterCatalogPick(() =>
+        {
+            _suppressPromoLinePick = true;
+            PromoLineCatalogPick = null;
+            PromoLineSearchText = string.Empty;
+            _suppressPromoLinePick = false;
+        });
+        _ = AddPromoProductFromCatalogAsync(produitId);
+    }
+
+    private async Task AddPaidProductFromCatalogAsync(int produitId)
+    {
+        var product = await LoadProductPricingAsync(produitId);
+        if (product is null) return;
+
+        var existing = Lignes.FirstOrDefault(l => !l.IsPromo && l.ProduitId == product.Id && product.Id != 0);
+        if (existing != null)
+        {
+            existing.Quantite += 1;
+            // Refresh price/TVA from the product so edited rates apply on next add.
+            existing.PrixUnitaireHt = product.PrixVenteHT;
+            existing.TauxTva = product.TauxTVA;
+            SelectedLine = existing;
+        }
+        else
+        {
+            var row = new BonSortieLineRow();
+            row.ApplyCatalogProduct(product);
+            row.Quantite = 1;
+            row.PropertyChanged += LineChanged;
+            Lignes.Add(row);
+            SelectedLine = row;
+        }
         RefreshTotals();
+    }
+
+    private async Task AddPromoProductFromCatalogAsync(int produitId)
+    {
+        var product = await LoadProductPricingAsync(produitId);
+        if (product is null) return;
+
+        var row = new BonSortieLineRow();
+        row.ApplyPromoCatalogProduct(product);
+        row.Quantite = 1;
+        row.PropertyChanged += LineChanged;
+        Lignes.Add(row);
+        SelectedLine = row;
+        RefreshTotals();
+    }
+
+    private async Task<GestionCommerciale.Modules.Stock.Models.Produit?> LoadProductPricingAsync(int produitId)
+    {
+        if (produitId == 0) return null;
+        await using var db = await _dbFactory.CreateDbContextAsync();
+        return await db.Produits.AsNoTracking()
+            .Where(x => x.Id == produitId)
+            .Select(x => new GestionCommerciale.Modules.Stock.Models.Produit
+            {
+                Id = x.Id,
+                Reference = x.Reference,
+                Designation = x.Designation,
+                Unite = x.Unite,
+                PrixVenteHT = x.PrixVenteHT,
+                PrixAchatHT = x.PrixAchatHT,
+                TauxTVA = x.TauxTVA,
+                Actif = x.Actif
+            })
+            .FirstOrDefaultAsync();
     }
 
     private void ConsolidateDuplicateProductLines()
     {
-        foreach (var g in Lignes.Where(l => l.ProduitId != 0).GroupBy(l => l.ProduitId).ToList())
+        foreach (var g in Lignes.Where(l => !l.IsPromo && l.ProduitId != 0).GroupBy(l => l.ProduitId).ToList())
         {
             if (g.Count() < 2) continue;
             var ordered = g.OrderBy(l => Lignes.IndexOf(l)).ToList();
@@ -494,12 +559,13 @@ public partial class BonSortieEditViewModel : BaseViewModel
             {
                 ProduitId = l.ProduitId,
                 Reference = prod?.Reference ?? string.Empty,
-                Designation = l.Designation,
+                Designation = BonSortieLineRow.StripPromoSuffix(l.Designation),
                 Conditionnement = l.Conditionnement,
                 Quantite = l.Quantite,
                 PrixUnitaireHt = l.PrixUnitaireHT,
                 Remise = l.Remise,
-                TauxTva = l.TauxTVA
+                TauxTva = l.TauxTVA,
+                IsPromo = BonSortieLineRow.LooksLikePromo(l.Designation)
             };
             Lignes.Add(row);
         }
@@ -543,7 +609,7 @@ public partial class BonSortieEditViewModel : BaseViewModel
             Quantite = 1,
             PrixUnitaireHt = p?.PrixVenteHT ?? 0,
             Remise = 0,
-            TauxTva = p?.TauxTVA ?? 20
+            TauxTva = p?.TauxTVA ?? 0
         };
         row.PropertyChanged += LineChanged;
         Lignes.Add(row);
@@ -616,7 +682,7 @@ public partial class BonSortieEditViewModel : BaseViewModel
                     entity.Lignes.Add(new BonSortieLigne
                     {
                         ProduitId = l.ProduitId,
-                        Designation = l.Designation,
+                        Designation = l.DesignationForPersist,
                         Conditionnement = l.Conditionnement,
                         Quantite = l.Quantite,
                         PrixUnitaireHT = l.PrixUnitaireHt,
@@ -646,7 +712,7 @@ public partial class BonSortieEditViewModel : BaseViewModel
                     entity.Lignes.Add(new BonSortieLigne
                     {
                         ProduitId = l.ProduitId,
-                        Designation = l.Designation,
+                        Designation = l.DesignationForPersist,
                         Conditionnement = l.Conditionnement,
                         Quantite = l.Quantite,
                         PrixUnitaireHT = l.PrixUnitaireHt,

@@ -113,7 +113,7 @@ public partial class BonRetourListViewModel : BaseViewModel
 
             await using var db = await _dbFactory.CreateDbContextAsync(cancellationToken);
             var cfg = await db.AppSettings.AsNoTracking().FirstAsync(cancellationToken);
-            var devise = string.IsNullOrWhiteSpace(cfg.Devise) ? "MAD" : cfg.Devise.Trim();
+            var devise = string.IsNullOrWhiteSpace(cfg.Devise) ? "DH" : cfg.Devise.Trim();
 
             var joined = from a in db.BonsRetour.AsNoTracking().Include(a => a.Lignes)
                          join t in db.Tiers.AsNoTracking() on a.ClientId equals t.Id into tj

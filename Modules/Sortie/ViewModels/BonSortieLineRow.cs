@@ -6,6 +6,9 @@ namespace GestionCommerciale.Modules.Sortie.ViewModels;
 
 public partial class BonSortieLineRow : ObservableObject
 {
+    public const string PromoSuffix = " (promo)";
+    public const string PromoLabel = "(promo)";
+
     [ObservableProperty] private int _produitId;
     [ObservableProperty] private string _reference = string.Empty;
     [ObservableProperty] private string _designation = string.Empty;
@@ -14,10 +17,23 @@ public partial class BonSortieLineRow : ObservableObject
     [ObservableProperty] private decimal _prixUnitaireHt;
     [ObservableProperty] private decimal _remise;
     [ObservableProperty] private decimal _tauxTva;
+    [ObservableProperty] private bool _isPromo;
 
     public decimal MontantHt => DocumentTotalsHelper.LigneHT(Quantite, PrixUnitaireHt, Remise);
 
     public decimal MontantTtc => MontantHt * (1 + TauxTva / 100m);
+
+    /// <summary>Designation stored on the document (includes promo marker when needed).</summary>
+    public string DesignationForPersist
+    {
+        get
+        {
+            var baseName = Designation.Trim();
+            if (!IsPromo)
+                return baseName;
+            return LooksLikePromo(baseName) ? baseName : baseName + PromoSuffix;
+        }
+    }
 
     partial void OnQuantiteChanged(decimal value) => NotifyMontants();
     partial void OnPrixUnitaireHtChanged(decimal value) => NotifyMontants();
@@ -26,6 +42,7 @@ public partial class BonSortieLineRow : ObservableObject
 
     public void ApplyCatalogProduct(Produit p)
     {
+        IsPromo = false;
         ProduitId = p.Id;
         Reference = p.Reference;
         Designation = p.Designation;
@@ -33,6 +50,30 @@ public partial class BonSortieLineRow : ObservableObject
         PrixUnitaireHt = p.PrixVenteHT;
         TauxTva = p.TauxTVA;
         NotifyMontants();
+    }
+
+    public void ApplyPromoCatalogProduct(Produit p)
+    {
+        ApplyCatalogProduct(p);
+        IsPromo = true;
+        Designation = StripPromoSuffix(p.Designation);
+        PrixUnitaireHt = 0;
+        Remise = 0;
+        NotifyMontants();
+    }
+
+    public static bool LooksLikePromo(string designation) =>
+        designation.Contains(PromoSuffix, StringComparison.OrdinalIgnoreCase)
+        || designation.TrimEnd().EndsWith(PromoLabel, StringComparison.OrdinalIgnoreCase);
+
+    public static string StripPromoSuffix(string designation)
+    {
+        var s = designation.Trim();
+        if (s.EndsWith(PromoSuffix, StringComparison.OrdinalIgnoreCase))
+            return s[..^PromoSuffix.Length].TrimEnd();
+        if (s.EndsWith(PromoLabel, StringComparison.OrdinalIgnoreCase))
+            return s[..^PromoLabel.Length].TrimEnd();
+        return s;
     }
 
     private void NotifyMontants()

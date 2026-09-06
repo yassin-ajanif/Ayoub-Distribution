@@ -278,7 +278,7 @@ public partial class ReportsListViewModel : BaseViewModel
     private async Task LoadSalesByCustomerAsync(DateTime from, DateTime to, CancellationToken ct)
     {
         _allSalesByCustomer = await Task.Run(() => _reportService.GetSalesByCustomerAsync(from, to, ct), ct);
-        var dev = _allSalesByCustomer.Count > 0 ? _allSalesByCustomer[0].Devise : "MAD";
+        var dev = _allSalesByCustomer.Count > 0 ? _allSalesByCustomer[0].Devise : "DH";
         LblSaleByCustomerTotalHt = $"{_allSalesByCustomer.Sum(r => r.TotalHt):N2} {dev}";
         LblSaleByCustomerTotalTtc = $"{_allSalesByCustomer.Sum(r => r.TotalTtc):N2} {dev}";
         LblSaleByCustomerTotalProfit = $"{_allSalesByCustomer.Sum(r => r.Profit):N2} {dev}";
@@ -294,7 +294,7 @@ public partial class ReportsListViewModel : BaseViewModel
     private async Task LoadDailySalesAsync(DateTime from, DateTime to, CancellationToken ct)
     {
         _allDailySales = await Task.Run(() => _reportService.GetDailySalesAsync(from, to, ct), ct);
-        var dev = _allDailySales.Count > 0 ? _allDailySales[0].Devise : "MAD";
+        var dev = _allDailySales.Count > 0 ? _allDailySales[0].Devise : "DH";
         LblDailySalesTotalProfit = $"{_allDailySales.Sum(r => r.Profit):N2} {dev}";
         FinishPagedLoad(_allDailySales.Count);
     }

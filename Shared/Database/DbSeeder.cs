@@ -10,8 +10,18 @@ public static class DbSeeder
     {
         if (!db.AppSettings.Any())
         {
-            db.AppSettings.Add(new AppSettingsRow { Id = 1 });
+            db.AppSettings.Add(new AppSettingsRow { Id = 1, Devise = "DH" });
             db.SaveChanges();
+        }
+        else
+        {
+            var settings = db.AppSettings.First();
+            if (string.IsNullOrWhiteSpace(settings.Devise)
+                || settings.Devise.Trim().Equals("MAD", StringComparison.OrdinalIgnoreCase))
+            {
+                settings.Devise = "DH";
+                db.SaveChanges();
+            }
         }
 
         foreach (var legacyName in new[] { "Client Comptoire", "Client Comptoir" })

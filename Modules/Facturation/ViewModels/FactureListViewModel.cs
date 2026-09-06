@@ -103,7 +103,7 @@ public partial class FactureListViewModel : BaseViewModel
                 Pagination.CurrentPage = 1;
 
             var cfg = await _settings.GetAsync(ct);
-            var devise = string.IsNullOrWhiteSpace(cfg.Devise) ? "MAD" : cfg.Devise.Trim();
+            var devise = string.IsNullOrWhiteSpace(cfg.Devise) ? "DH" : cfg.Devise.Trim();
             await using var db = await _dbFactory.CreateDbContextAsync(ct);
             var q = db.Factures.AsNoTracking().Include(f => f.Lignes).AsQueryable();
             q = PayeeFilterIndex switch

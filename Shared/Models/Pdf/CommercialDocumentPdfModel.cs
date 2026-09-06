@@ -15,7 +15,7 @@ public sealed class CommercialDocumentPdfModel
     public decimal TotalTtc { get; init; }
     /// <summary>When false (Montant TTC column hidden in UI), totals box shows only HT; amount-in-words uses HT.</summary>
     public bool ShowTaxAndTtcInTotalsBox { get; init; } = true;
-    public string Devise { get; init; } = "MAD";
+    public string Devise { get; init; } = "DH";
     public string? AmountInWords { get; init; }
     public string? Note { get; init; }
     public IReadOnlyList<string> FooterLines { get; init; } = Array.Empty<string>();

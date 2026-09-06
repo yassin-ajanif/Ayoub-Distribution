@@ -88,7 +88,7 @@ public sealed class ReportService : IReportService
         await using var db = await _dbFactory.CreateDbContextAsync(ct);
         var toEnd = to.Date.AddDays(1);
 
-        var factures = await db.Factures.AsNoTracking()
+        var bonsSortie = await db.BonsSortie.AsNoTracking()
             .Where(f => f.Date >= from && f.Date < toEnd)
             .Select(f => new
             {
@@ -107,21 +107,21 @@ public sealed class ReportService : IReportService
             })
             .ToListAsync(ct);
 
-        var clientIds = factures.Select(f => f.ClientId).Distinct().ToList();
+        var clientIds = bonsSortie.Select(f => f.ClientId).Distinct().ToList();
         var clients = await db.Tiers.AsNoTracking()
             .Where(t => clientIds.Contains(t.Id))
             .Select(t => new { t.Id, t.Nom, t.ICE, t.Ville })
             .ToListAsync(ct);
         var clientMap = clients.ToDictionary(c => c.Id);
 
-        var allProdIds = factures.SelectMany(f => f.Lignes).Select(l => l.ProduitId).Distinct().ToList();
+        var allProdIds = bonsSortie.SelectMany(f => f.Lignes).Select(l => l.ProduitId).Distinct().ToList();
         var produits = await db.Produits.AsNoTracking()
             .Where(p => allProdIds.Contains(p.Id))
             .Select(p => new { p.Id, p.Reference, p.Designation, p.PrixAchatHT })
             .ToListAsync(ct);
         var prodMap = produits.ToDictionary(p => p.Id);
 
-        var grouped = factures
+        var grouped = bonsSortie
             .GroupBy(f => f.ClientId)
             .Select(g =>
             {
@@ -154,7 +154,7 @@ public sealed class ReportService : IReportService
                     .OrderByDescending(pr => pr.TotalTtc)
                     .ToList();
 
-                // Client-level totals with profit (global discount applied)
+                // Vendeur-level totals with profit (global discount applied)
                 decimal totalHt = 0, totalTva = 0, totalCost = 0;
                 foreach (var f in g)
                 {
@@ -740,6 +740,6 @@ public sealed class ReportService : IReportService
     private async Task<string> GetDeviseAsync(CancellationToken ct = default)
     {
         var cfg = await _settings.GetAsync(ct);
-        return string.IsNullOrWhiteSpace(cfg.Devise) ? "MAD" : cfg.Devise!;
+        return string.IsNullOrWhiteSpace(cfg.Devise) ? "DH" : cfg.Devise!;
     }
 }

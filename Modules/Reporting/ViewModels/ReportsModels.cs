@@ -92,7 +92,7 @@ public sealed partial class ReportSaleByCustomerRow : ObservableObject
         Profit = profit;
         MarginPct = marginPct;
         Devise = devise;
-        LblCount = nbFactures.ToString();
+        LblCount = $"{nbFactures} BS";
         LblHt = $"{totalHt:N2} {devise}";
         LblTtc = $"{totalTtc:N2} {devise}";
         LblProfit = $"{profit:N2} {devise}";

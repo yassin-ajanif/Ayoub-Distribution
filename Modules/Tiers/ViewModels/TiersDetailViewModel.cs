@@ -37,7 +37,7 @@ public partial class TiersDetailViewModel : BaseViewModel
     private readonly IAppSettingsService _settings;
 
     private TiersListScope _returnScope = TiersListScope.Clients;
-    private string _devise = "MAD";
+    private string _devise = "DH";
 
     public TiersListScope ListScope => _returnScope;
 
@@ -213,7 +213,7 @@ public partial class TiersDetailViewModel : BaseViewModel
         try
         {
             var cfg = await _settings.GetAsync(cancellationToken);
-            _devise = string.IsNullOrWhiteSpace(cfg.Devise) ? "MAD" : cfg.Devise.Trim();
+            _devise = string.IsNullOrWhiteSpace(cfg.Devise) ? "DH" : cfg.Devise.Trim();
 
             await using var db = await _dbFactory.CreateDbContextAsync(cancellationToken);
             var t = await db.Tiers.AsNoTracking().FirstOrDefaultAsync(x => x.Id == id, cancellationToken);

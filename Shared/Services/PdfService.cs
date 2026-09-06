@@ -545,7 +545,7 @@ public sealed class PdfService : IPdfService
         CancellationToken cancellationToken = default)
     {
         var cfg = await _settings.GetAsync(cancellationToken);
-        var devise = string.IsNullOrWhiteSpace(cfg.Devise) ? "MAD" : cfg.Devise.Trim();
+        var devise = string.IsNullOrWhiteSpace(cfg.Devise) ? "DH" : cfg.Devise.Trim();
         return ClientAccountStatementPdfRenderer.Render(
             cfg.SocieteNom,
             devise,
@@ -562,7 +562,7 @@ public sealed class PdfService : IPdfService
         CancellationToken cancellationToken = default)
     {
         var cfg = await _settings.GetAsync(cancellationToken);
-        var devise = string.IsNullOrWhiteSpace(cfg.Devise) ? "MAD" : cfg.Devise.Trim();
+        var devise = string.IsNullOrWhiteSpace(cfg.Devise) ? "DH" : cfg.Devise.Trim();
         return SupplierAccountStatementPdfRenderer.Render(
             cfg.SocieteNom,
             devise,
@@ -616,7 +616,7 @@ public sealed class PdfService : IPdfService
 
         var currencyWord = cfg.Devise.ToUpperInvariant() switch
         {
-            "MAD" => "dirhams",
+            "MAD" or "DH" => "dirhams",
             "EUR" => "euros",
             "USD" => "dollars",
             _ => cfg.Devise

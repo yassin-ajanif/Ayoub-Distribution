@@ -55,7 +55,7 @@ public partial class SettingsViewModel : BaseViewModel
     [ObservableProperty] private bool _blocageStock = true;
     [ObservableProperty] private bool _enableVirtualKeyboard;
     [ObservableProperty] private int _devisValiditeJours = 30;
-    [ObservableProperty] private string _devise = "MAD";
+    [ObservableProperty] private string _devise = "DH";
     [ObservableProperty] private UiLanguageOption? _selectedLanguageOption;
 
     [ObservableProperty] private string _lblLoad = string.Empty;

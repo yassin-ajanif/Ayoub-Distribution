@@ -253,7 +253,7 @@ public partial class ProduitsViewModel : BaseViewModel
     }
 
     private static string SuggestDraftReference() =>
-        "P-" + Guid.NewGuid().ToString("N")[..10].ToUpperInvariant();
+        "P-" + Guid.NewGuid().ToString("N")[..4].ToUpperInvariant();
 
     private async Task ApplyNewDraftDefaultsAsync(CancellationToken cancellationToken)
     {

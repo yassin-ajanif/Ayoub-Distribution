@@ -172,7 +172,7 @@ public partial class ReportingViewModel : BaseViewModel
     private async Task<ReportData> LoadDataAsync(CancellationToken ct)
     {
         var cfg = await _settings.GetAsync(ct);
-        var dev = string.IsNullOrWhiteSpace(cfg.Devise) ? "MAD" : cfg.Devise!;
+        var dev = string.IsNullOrWhiteSpace(cfg.Devise) ? "DH" : cfg.Devise!;
         await using var db = await _dbFactory.CreateDbContextAsync(ct);
         var now = DateTime.Today;
         var startCur = new DateTime(now.Year, now.Month, 1);
