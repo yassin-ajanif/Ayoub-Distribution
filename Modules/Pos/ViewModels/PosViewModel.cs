@@ -60,7 +60,6 @@ public partial class PosViewModel : BaseViewModel
             OnPropertyChanged(nameof(LabelRemiseGlobale));
             OnPropertyChanged(nameof(LabelRemiseGlobaleMontant));
         };
-        ClientLookup.Categorie = CategorieTiers.Comptoir;
         ClientLookup.BindSelection(() => SelectedClient?.Id ?? 0, c => SelectedClient = c);
         _ = LoadClientsAsync();
         _ = LoadSettingsAsync();

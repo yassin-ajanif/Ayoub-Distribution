@@ -1,5 +1,6 @@
 using System.Collections.ObjectModel;
 using System.Linq;
+using System.Text.Json;
 using Avalonia.Media.Imaging;
 using Avalonia.Threading;
 using CommunityToolkit.Mvvm.ComponentModel;
@@ -25,6 +26,7 @@ public partial class ProduitsViewModel : BaseViewModel
     private readonly ICurrentUserSession _session;
     private readonly ILocaleService _locale;
     private readonly IProductImportExportService _importExport;
+    private readonly IAppSettingsService _settings;
 
     private CancellationTokenSource? _imageLoadCts;
     private byte[]? _pendingImageReplacement;
@@ -34,13 +36,20 @@ public partial class ProduitsViewModel : BaseViewModel
 
     private Bitmap? _ficheImagePreview;
 
-    public ProduitsViewModel(IDbContextFactory<AppDbContext> dbFactory, IDialogService dialog, ICurrentUserSession session, ILocaleService locale, IProductImportExportService importExport)
+    public ProduitsViewModel(
+        IDbContextFactory<AppDbContext> dbFactory,
+        IDialogService dialog,
+        ICurrentUserSession session,
+        ILocaleService locale,
+        IProductImportExportService importExport,
+        IAppSettingsService settings)
     {
         _dbFactory = dbFactory;
         _dialog = dialog;
         _session = session;
         _locale = locale;
         _importExport = importExport;
+        _settings = settings;
         _locale.CultureApplied += (_, _) => RefreshProduitsUi();
         Pagination = new PaginationHelper(() => _ = LoadProduitsAsync(CancellationToken.None));
         RefreshProduitsUi();
@@ -145,7 +154,7 @@ public partial class ProduitsViewModel : BaseViewModel
     [ObservableProperty] private string _ficheUnite = "U";
     [ObservableProperty] private decimal _fichePrixAchatHt;
     [ObservableProperty] private decimal _fichePrixVenteHt;
-    [ObservableProperty] private decimal _ficheTauxTva = 20;
+    [ObservableProperty] private decimal _ficheTauxTva;
     [ObservableProperty] private decimal _fichePrixAchatTtc;
     [ObservableProperty] private decimal _fichePrixVenteTtc;
 
@@ -224,7 +233,7 @@ public partial class ProduitsViewModel : BaseViewModel
     }
 
     [RelayCommand]
-    private void NewProduit()
+    private async Task NewProduit(CancellationToken cancellationToken)
     {
         _imageLoadCts?.Cancel();
         _imageLoadCts?.Dispose();
@@ -235,7 +244,7 @@ public partial class ProduitsViewModel : BaseViewModel
         FicheHasImage = false;
         CanRemoveFicheImage = false;
 
-        ApplyNewDraftDefaults();
+        await ApplyNewDraftDefaultsAsync(cancellationToken);
         IsNewDraft = true;
         if (SelectedProduit != null)
             SelectedProduit = null;
@@ -246,7 +255,7 @@ public partial class ProduitsViewModel : BaseViewModel
     private static string SuggestDraftReference() =>
         "P-" + Guid.NewGuid().ToString("N")[..10].ToUpperInvariant();
 
-    private void ApplyNewDraftDefaults()
+    private async Task ApplyNewDraftDefaultsAsync(CancellationToken cancellationToken)
     {
         FicheReference = SuggestDraftReference();
         FicheCodeBarre = string.Empty;
@@ -254,10 +263,27 @@ public partial class ProduitsViewModel : BaseViewModel
         FicheUnite = "U";
         FichePrixAchatHt = 0;
         FichePrixVenteHt = 0;
-        FicheTauxTva = 20;
+        FicheTauxTva = await GetDefaultTauxTvaAsync(cancellationToken);
         FicheStockMinimum = 0;
         FicheStockActuel = 0;
         FicheActif = true;
+    }
+
+    private async Task<decimal> GetDefaultTauxTvaAsync(CancellationToken cancellationToken)
+    {
+        try
+        {
+            var cfg = await _settings.GetAsync(cancellationToken);
+            var arr = JsonSerializer.Deserialize<List<decimal>>(cfg.TauxTVAJson);
+            if (arr is { Count: > 0 })
+                return arr[0];
+        }
+        catch
+        {
+            // Fall through to 0 when settings are missing or invalid.
+        }
+
+        return 0;
     }
 
     [RelayCommand]
@@ -453,7 +479,7 @@ public partial class ProduitsViewModel : BaseViewModel
             FicheUnite = "U";
             FichePrixAchatHt = 0;
             FichePrixVenteHt = 0;
-            FicheTauxTva = 20;
+            FicheTauxTva = 0;
             FicheStockMinimum = 0;
             FicheStockActuel = 0;
             FicheActif = true;

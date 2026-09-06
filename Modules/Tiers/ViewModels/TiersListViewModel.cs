@@ -79,7 +79,6 @@ public partial class TiersListViewModel : BaseViewModel
     [ObservableProperty] private string _btnNew = string.Empty;
     [ObservableProperty] private string _btnToggleActif = string.Empty;
     [ObservableProperty] private string _colNom = string.Empty;
-    [ObservableProperty] private string _colCategorie = string.Empty;
     [ObservableProperty] private string _colIce = string.Empty;
     [ObservableProperty] private string _colVille = string.Empty;
     [ObservableProperty] private string _colActif = string.Empty;
@@ -90,7 +89,6 @@ public partial class TiersListViewModel : BaseViewModel
         BtnNew = _locale.T("Btn_New");
         BtnToggleActif = _locale.T("Btn_ToggleActif");
         ColNom = _locale.T("Lbl_ColNom");
-        ColCategorie = _locale.T("Lbl_CategorieTiers");
         ColIce = _locale.T("Lbl_ColIce");
         ColVille = _locale.T("Lbl_ColVille");
         ColActif = _locale.T("Lbl_ColActif");

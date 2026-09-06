@@ -82,7 +82,6 @@ public partial class TiersDetailViewModel : BaseViewModel
     [ObservableProperty] private string _wmConditions = string.Empty;
     [ObservableProperty] private string _chkActif = string.Empty;
     [ObservableProperty] private string _btnSave = string.Empty;
-    [ObservableProperty] private string _lblCategorie = string.Empty;
 
     [ObservableProperty] private string _lblLedgerTitle = string.Empty;
     [ObservableProperty] private string _lblSoldeActuel = string.Empty;
@@ -102,11 +101,13 @@ public partial class TiersDetailViewModel : BaseViewModel
 
     public ObservableCollection<ClientLedgerDisplayRow> LedgerRows { get; } = [];
     public ObservableCollection<TypeTiers> Types { get; } = [];
-    public ObservableCollection<CategorieTiers> Categories { get; } = [CategorieTiers.Officiel, CategorieTiers.Comptoir];
+
+    public bool CanEditType => _returnScope == TiersListScope.Fournisseurs;
+
+    public string TypeLabel => _locale.T("TypeTiers_Vendeur");
 
     [ObservableProperty] private int? _tiersId;
     [ObservableProperty] private TypeTiers _type = TypeTiers.Client;
-    [ObservableProperty] private CategorieTiers _categorie = CategorieTiers.Officiel;
     [ObservableProperty] private string _nom = string.Empty;
     [ObservableProperty] private string _ice = string.Empty;
     [ObservableProperty] private string _adresse = string.Empty;
@@ -128,11 +129,10 @@ public partial class TiersDetailViewModel : BaseViewModel
         WmConditions = _locale.T("Wm_ConditionsPaiement");
         ChkActif = _locale.T("Lbl_Actif");
         BtnSave = _locale.T("Btn_Save");
-        LblCategorie = _locale.T("Lbl_CategorieTiers");
         LblLedgerTitle = _returnScope == TiersListScope.Fournisseurs
             ? _locale.T("SupplierLedger_Title")
             : _locale.T("ClientLedger_Title");
-        LblSoldeActuel = _locale.T("ClientLedger_SoldeActuel");
+        RefreshSoldeLabel();
         BtnPdfLedger = _locale.T("Btn_Pdf");
         LblLedgerDate = _locale.T("ClientLedger_ColDate");
         LblLedgerDesignation = _locale.T("ClientLedger_ColDesignation");
@@ -148,6 +148,14 @@ public partial class TiersDetailViewModel : BaseViewModel
             : _locale.T("ClientLedger_SaveFirst");
     }
 
+    private void RefreshSoldeLabel()
+    {
+        var name = string.IsNullOrWhiteSpace(Nom) ? _locale.T("TypeTiers_Vendeur") : Nom.Trim();
+        LblSoldeActuel = _locale.Tf("ClientLedger_SoldeActuel", name);
+    }
+
+    partial void OnNomChanged(string value) => RefreshSoldeLabel();
+
     private void RebuildTypeOptions()
     {
         Types.Clear();
@@ -155,13 +163,14 @@ public partial class TiersDetailViewModel : BaseViewModel
         {
             case TiersListScope.Clients:
                 Types.Add(TypeTiers.Client);
-                Types.Add(TypeTiers.LesDeux);
                 break;
             case TiersListScope.Fournisseurs:
                 Types.Add(TypeTiers.Fournisseur);
                 Types.Add(TypeTiers.LesDeux);
                 break;
         }
+        OnPropertyChanged(nameof(CanEditType));
+        OnPropertyChanged(nameof(TypeLabel));
     }
 
     public void Load(int? tiersId) => Load(tiersId, TiersListScope.Clients);
@@ -188,7 +197,6 @@ public partial class TiersDetailViewModel : BaseViewModel
             Email = string.Empty;
             ConditionsPaiement = string.Empty;
             Type = returnScope == TiersListScope.Fournisseurs ? TypeTiers.Fournisseur : TypeTiers.Client;
-            Categorie = CategorieTiers.Officiel;
             Actif = true;
             Title = returnScope == TiersListScope.Fournisseurs
                 ? _locale.T("TiersDetail_NewSupplier")
@@ -215,7 +223,6 @@ public partial class TiersDetailViewModel : BaseViewModel
             if (!Types.Contains(Type))
                 Types.Add(Type);
 
-            Categorie = t.Categorie;
             Nom = t.Nom;
             Ice = t.ICE;
             Adresse = t.Adresse;
@@ -332,7 +339,7 @@ public partial class TiersDetailViewModel : BaseViewModel
                 var t = new Models.Tiers
                 {
                     Type = Type,
-                    Categorie = Categorie,
+                    Categorie = CategorieTiers.Officiel,
                     Nom = Nom.Trim(),
                     ICE = Ice.Trim(),
                     Adresse = Adresse.Trim(),
@@ -350,7 +357,6 @@ public partial class TiersDetailViewModel : BaseViewModel
             {
                 var t = await db.Tiers.FirstAsync(x => x.Id == TiersId, cancellationToken);
                 t.Type = Type;
-                t.Categorie = Categorie;
                 t.Nom = Nom.Trim();
                 t.ICE = Ice.Trim();
                 t.Adresse = Adresse.Trim();

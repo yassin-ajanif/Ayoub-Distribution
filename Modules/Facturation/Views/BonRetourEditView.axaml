@@ -25,19 +25,7 @@
       <Grid ColumnDefinitions="*,Auto" VerticalAlignment="Top">
         <StackPanel Grid.Column="0" Spacing="4" HorizontalAlignment="Left">
           <TextBlock Text="{Binding LblClient}" Opacity="0.7"/>
-          <StackPanel Orientation="Horizontal" Spacing="8">
-            <ComboBox Classes="clientCat"
-                      VerticalAlignment="Center"
-                      IsEnabled="{Binding CanEditDraft}"
-                      ItemsSource="{Binding ClientLookup.Categories}"
-                      SelectedItem="{Binding ClientLookup.Categorie, Mode=TwoWay}">
-              <ComboBox.ItemTemplate>
-                <DataTemplate>
-                  <TextBlock Text="{Binding ., Converter={StaticResource CategorieTiersLabelConverter}}"/>
-                </DataTemplate>
-              </ComboBox.ItemTemplate>
-            </ComboBox>
-            <AutoCompleteBox MinWidth="280"
+          <AutoCompleteBox MinWidth="280"
                              MaxWidth="420"
                              HorizontalAlignment="Left"
                              MinimumPrefixLength="1" MaxDropDownHeight="320"
@@ -55,7 +43,6 @@
                 </DataTemplate>
               </AutoCompleteBox.ItemTemplate>
             </AutoCompleteBox>
-          </StackPanel>
         </StackPanel>
         <StackPanel Grid.Column="1" Orientation="Horizontal" Spacing="10" VerticalAlignment="Bottom" Margin="16,0,0,0">
           <TextBlock Text="{Binding LblDateBonRetour}" VerticalAlignment="Center" Opacity="0.7"/>

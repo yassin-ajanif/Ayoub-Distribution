@@ -12,6 +12,7 @@
         <conv:StockMovementTypeConverter x:Key="StockMovementTypeConverter"/>
         <conv:ModePaiementLabelConverter x:Key="ModePaiementLabelConverter"/>
         <conv:CategorieTiersLabelConverter x:Key="CategorieTiersLabelConverter"/>
+        <conv:TypeTiersLabelConverter x:Key="TypeTiersLabelConverter"/>
     </Application.Resources>
 
     <Application.DataTemplates>

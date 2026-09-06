@@ -34,17 +34,6 @@
                       Spacing="8"
                       VerticalAlignment="Center">
             <TextBlock Text="{Binding LblFournisseur}" VerticalAlignment="Center" Opacity="0.7"/>
-            <ComboBox Classes="clientCat"
-                      VerticalAlignment="Center"
-                      IsEnabled="{Binding CanEditDraft}"
-                      ItemsSource="{Binding FournisseurLookup.Categories}"
-                      SelectedItem="{Binding FournisseurLookup.Categorie, Mode=TwoWay}">
-              <ComboBox.ItemTemplate>
-                <DataTemplate>
-                  <TextBlock Text="{Binding ., Converter={StaticResource CategorieTiersLabelConverter}}"/>
-                </DataTemplate>
-              </ComboBox.ItemTemplate>
-            </ComboBox>
             <AutoCompleteBox MinWidth="200"
                              MaxWidth="420"
                              VerticalAlignment="Center"

@@ -4,7 +4,7 @@ public static class DbSeeder
 {
     public const string DefaultAdminEmail = "admin@local";
     public const string DefaultAdminPassword = "admin";
-    public const string DefaultClientName = "Client Comptoire";
+    public const string DefaultClientName = "Vendeur Comptoir";
 
     public static void Seed(AppDbContext db)
     {
@@ -12,6 +12,16 @@ public static class DbSeeder
         {
             db.AppSettings.Add(new AppSettingsRow { Id = 1 });
             db.SaveChanges();
+        }
+
+        foreach (var legacyName in new[] { "Client Comptoire", "Client Comptoir" })
+        {
+            var legacy = db.Tiers.FirstOrDefault(t => t.Nom == legacyName);
+            if (legacy != null && !db.Tiers.Any(t => t.Nom == DefaultClientName))
+            {
+                legacy.Nom = DefaultClientName;
+                db.SaveChanges();
+            }
         }
 
         if (!db.Tiers.Any(t => t.Nom == DefaultClientName))

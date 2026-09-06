@@ -82,7 +82,7 @@ public sealed class PdfService : IPdfService
         if (devis.RemiseGlobale > 0)
             docLines.Add(new("Remise globale", $"{devis.RemiseGlobale:N2} %"));
 
-        var model = BaseModel(cfg, "DEVIS", docLines, PartyLines(party, "Client"), cols, rows, totals, devis.Note, vis.ShowMontantTtc);
+        var model = BaseModel(cfg, "DEVIS", docLines, PartyLines(party, "Vendeur"), cols, rows, totals, devis.Note, vis.ShowMontantTtc);
         return CommercialDocumentPdfRenderer.Render(model, TryLoadLogoBytes(cfg.SocieteLogoPath));
     }
 
@@ -121,7 +121,7 @@ public sealed class PdfService : IPdfService
         if (!string.IsNullOrWhiteSpace(bccRef))
             docLines.Add(new("BC", bccRef));
 
-        var model = BaseModel(cfg, "BON DE LIVRAISON", docLines, PartyLines(party, "Client"), cols, rows, totals, bl.Note, blVis.ShowMontantTtc);
+        var model = BaseModel(cfg, "BON DE LIVRAISON", docLines, PartyLines(party, "Vendeur"), cols, rows, totals, bl.Note, blVis.ShowMontantTtc);
         return CommercialDocumentPdfRenderer.Render(model, TryLoadLogoBytes(cfg.SocieteLogoPath));
     }
 
@@ -230,7 +230,7 @@ public sealed class PdfService : IPdfService
             new("Date", bc.Date.ToString("dd/MM/yyyy"))
         };
 
-        var model = BaseModel(cfg, "BON DE COMMANDE", docLines, PartyLines(party, "Client"), cols, rows, (ht, tva, ht + tva), bc.Note, vis.ShowMontantTtc);
+        var model = BaseModel(cfg, "BON DE COMMANDE", docLines, PartyLines(party, "Vendeur"), cols, rows, (ht, tva, ht + tva), bc.Note, vis.ShowMontantTtc);
         return CommercialDocumentPdfRenderer.Render(model, TryLoadLogoBytes(cfg.SocieteLogoPath));
     }
 
@@ -280,7 +280,7 @@ public sealed class PdfService : IPdfService
         if (facture.RemiseGlobale > 0)
             docLines.Add(new("Remise globale", $"{facture.RemiseGlobale:N2} %"));
 
-        var model = BaseModel(cfg, "FACTURE", docLines, PartyLines(party, "Client"), cols, rows, totals, facture.Note, vis.ShowMontantTtc);
+        var model = BaseModel(cfg, "FACTURE", docLines, PartyLines(party, "Vendeur"), cols, rows, totals, facture.Note, vis.ShowMontantTtc);
         return CommercialDocumentPdfRenderer.Render(model, TryLoadLogoBytes(cfg.SocieteLogoPath));
     }
 
@@ -319,7 +319,7 @@ public sealed class PdfService : IPdfService
         if (doc.RemiseGlobale > 0)
             docLines.Add(new("Remise globale", $"{doc.RemiseGlobale:N2} %"));
 
-        var model = BaseModel(cfg, "BON DE SORTIE", docLines, PartyLines(party, "Client"), cols, rows, totals, doc.Note, vis.ShowMontantTtc);
+        var model = BaseModel(cfg, "BON DE SORTIE", docLines, PartyLines(party, "Vendeur"), cols, rows, totals, doc.Note, vis.ShowMontantTtc);
         return CommercialDocumentPdfRenderer.Render(model, TryLoadLogoBytes(cfg.SocieteLogoPath));
     }
 
@@ -498,7 +498,7 @@ public sealed class PdfService : IPdfService
             new("Date", bonRetour.Date.ToString("dd/MM/yyyy"))
         };
 
-        var model = BaseModel(cfg, "BON DE RETOUR", docLines, PartyLines(party, "Client"), cols, rows, totals, note, vis.ShowMontantTtc);
+        var model = BaseModel(cfg, "BON DE RETOUR", docLines, PartyLines(party, "Vendeur"), cols, rows, totals, note, vis.ShowMontantTtc);
         return CommercialDocumentPdfRenderer.Render(model, TryLoadLogoBytes(cfg.SocieteLogoPath));
     }
 

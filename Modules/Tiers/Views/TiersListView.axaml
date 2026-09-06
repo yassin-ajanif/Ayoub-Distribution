@@ -17,24 +17,22 @@
     <Grid Grid.Row="1" RowDefinitions="Auto,*" Margin="0,8,0,0">
       <Border Padding="10,6" BorderThickness="1" CornerRadius="8"
               Background="{DynamicResource CourseraSurfaceMutedBrush}" BorderBrush="{DynamicResource CourseraBorderBrush}">
-        <Grid ColumnDefinitions="2*,*,*,*,Auto">
+        <Grid ColumnDefinitions="2*,*,*,Auto">
           <TextBlock Grid.Column="0" Text="{Binding ColNom}" FontWeight="SemiBold"/>
-          <TextBlock Grid.Column="1" Text="{Binding ColCategorie}" FontWeight="SemiBold"/>
-          <TextBlock Grid.Column="2" Text="{Binding ColIce}" FontWeight="SemiBold"/>
-          <TextBlock Grid.Column="3" Text="{Binding ColVille}" FontWeight="SemiBold"/>
-          <TextBlock Grid.Column="4" Text="{Binding ColActif}" FontWeight="SemiBold"/>
+          <TextBlock Grid.Column="1" Text="{Binding ColIce}" FontWeight="SemiBold"/>
+          <TextBlock Grid.Column="2" Text="{Binding ColVille}" FontWeight="SemiBold"/>
+          <TextBlock Grid.Column="3" Text="{Binding ColActif}" FontWeight="SemiBold"/>
         </Grid>
       </Border>
       <ListBox Grid.Row="1" ItemsSource="{Binding Items}" SelectedItem="{Binding Selected}" Margin="0,8,0,0"
                beh:ListBoxOpenOnDoubleClick.OpenCommand="{Binding OpenSelectedCommand}">
         <ListBox.ItemTemplate>
           <DataTemplate DataType="m:Tiers">
-            <Grid ColumnDefinitions="2*,*,*,*,Auto">
+            <Grid ColumnDefinitions="2*,*,*,Auto">
               <TextBlock Grid.Column="0" Text="{Binding Nom}"/>
-              <TextBlock Grid.Column="1" Text="{Binding Categorie}"/>
-              <TextBlock Grid.Column="2" Text="{Binding ICE}"/>
-              <TextBlock Grid.Column="3" Text="{Binding Ville}"/>
-              <TextBlock Grid.Column="4" Text="{Binding Actif, Converter={x:Static conv:BoolActifLabelConverter.Instance}}"/>
+              <TextBlock Grid.Column="1" Text="{Binding ICE}"/>
+              <TextBlock Grid.Column="2" Text="{Binding Ville}"/>
+              <TextBlock Grid.Column="3" Text="{Binding Actif, Converter={x:Static conv:BoolActifLabelConverter.Instance}}"/>
             </Grid>
           </DataTemplate>
         </ListBox.ItemTemplate>
