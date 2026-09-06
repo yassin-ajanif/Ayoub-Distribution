@@ -1,11 +1,11 @@
 using GestionCommerciale.Shared.Models;
 
-namespace GestionCommerciale.Modules.AvoirFournisseur.Models;
+namespace GestionCommerciale.Modules.BonRetourFournisseur.Models;
 
-public class AvoirFournisseurLigne : BaseEntity
+public class BonRetourFournisseurLigne : BaseEntity
 {
-    public int AvoirFournisseurId { get; set; }
-    public AvoirFournisseur? AvoirFournisseur { get; set; }
+    public int BonRetourFournisseurId { get; set; }
+    public BonRetourFournisseur? BonRetourFournisseur { get; set; }
     public int ProduitId { get; set; }
     public string Designation { get; set; } = string.Empty;
     public decimal Quantite { get; set; }

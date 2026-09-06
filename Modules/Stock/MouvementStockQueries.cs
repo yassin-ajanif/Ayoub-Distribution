@@ -43,9 +43,9 @@ public static class MouvementStockQueries
                 && db.BonsReception.Any(br =>
                     br.Id == m.OrigineId
                     && db.Tiers.Any(tier => tier.Id == br.FournisseurId && tier.Nom.ToLower().Contains(t))))
-            || (m.OrigineType == StockMovementService.OrigineTypeAvoirFournisseur
+            || (m.OrigineType == StockMovementService.OrigineTypeBonRetourFournisseur
                 && m.OrigineId != null
-                && db.AvoirsFournisseurs.Any(a =>
+                && db.BonsRetourFournisseurs.Any(a =>
                     a.Id == m.OrigineId
                     && db.Tiers.Any(tier => tier.Id == a.FournisseurId && tier.Nom.ToLower().Contains(t)))));
     }

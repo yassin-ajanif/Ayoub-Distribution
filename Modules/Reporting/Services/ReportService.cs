@@ -1,4 +1,4 @@
-using GestionCommerciale.Modules.AvoirFournisseur.Models;
+using GestionCommerciale.Modules.BonRetourFournisseur.Models;
 using GestionCommerciale.Modules.Facturation.Models;
 using GestionCommerciale.Modules.FactureFournisseur.Models;
 using GestionCommerciale.Modules.Reporting.ViewModels;
@@ -468,7 +468,7 @@ public sealed class ReportService : IReportService
         var typeAchat = _locale.T("Reports_TypePurchase");
         var typeCharge = _locale.T("Reports_TypeCharge");
         var typeBonRetourClient = _locale.T("Reports_TypeBonRetourClient");
-        var typeAvoirFournisseur = _locale.T("Reports_TypeAvoirFournisseur");
+        var typeBonRetourFournisseur = _locale.T("Reports_TypeBonRetourFournisseur");
 
         var factures = await db.Factures.AsNoTracking()
             .Where(f => f.Date >= from && f.Date < toEnd)
@@ -655,7 +655,7 @@ public sealed class ReportService : IReportService
                 false));
         }
 
-        var avoirsFournisseur = await db.AvoirsFournisseurs.AsNoTracking()
+        var avoirsFournisseur = await db.BonsRetourFournisseurs.AsNoTracking()
             .Where(a => a.Date >= from && a.Date < toEnd)
             .Select(a => new
             {
@@ -673,18 +673,18 @@ public sealed class ReportService : IReportService
 
         foreach (var a in avoirsFournisseur)
         {
-            var lignes = a.Lignes.Select(l => new AvoirFournisseurLigne
+            var lignes = a.Lignes.Select(l => new BonRetourFournisseurLigne
             {
                 Quantite = l.Quantite,
                 PrixUnitaireHT = l.PrixUnitaireHT,
                 Remise = l.Remise,
                 TauxTVA = l.TauxTVA
             }).ToList();
-            var (_, _, ttc) = DocumentTotalsHelper.AvoirFournisseurTotals(lignes);
+            var (_, _, ttc) = DocumentTotalsHelper.BonRetourFournisseurTotals(lignes);
             totalBonsRetourFournisseur += ttc;
             rows.Add(new ReportProfitChargeRow(
-                ReportProfitChargeKind.AvoirFournisseur,
-                typeAvoirFournisseur,
+                ReportProfitChargeKind.BonRetourFournisseur,
+                typeBonRetourFournisseur,
                 a.Numero ?? string.Empty,
                 a.Date,
                 ttc,

@@ -342,7 +342,7 @@ public partial class ReportsListViewModel : BaseViewModel
     private void FilterProfitPurchases() => ToggleProfitFilter(ReportProfitChargeKind.Purchase);
 
     [RelayCommand]
-    private void FilterProfitBonsRetourFournisseur() => ToggleProfitFilter(ReportProfitChargeKind.AvoirFournisseur);
+    private void FilterProfitBonsRetourFournisseur() => ToggleProfitFilter(ReportProfitChargeKind.BonRetourFournisseur);
 
     [RelayCommand]
     private void FilterProfitCharges() => ToggleProfitFilter(ReportProfitChargeKind.Charge);
@@ -363,7 +363,7 @@ public partial class ReportsListViewModel : BaseViewModel
         IsProfitFilterMarginActive = kind == ReportProfitChargeKind.SaleMargin;
         IsProfitFilterBonsRetourClientActive = kind == ReportProfitChargeKind.BonRetourClient;
         IsProfitFilterPurchasesActive = kind == ReportProfitChargeKind.Purchase;
-        IsProfitFilterBonsRetourFournisseurActive = kind == ReportProfitChargeKind.AvoirFournisseur;
+        IsProfitFilterBonsRetourFournisseurActive = kind == ReportProfitChargeKind.BonRetourFournisseur;
         IsProfitFilterChargesActive = kind == ReportProfitChargeKind.Charge;
         IsProfitFilterAllActive = kind == null;
 

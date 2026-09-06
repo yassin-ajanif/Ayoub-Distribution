@@ -1,6 +1,6 @@
 using CommunityToolkit.Mvvm.ComponentModel;
 using CommunityToolkit.Mvvm.Input;
-using GestionCommerciale.Modules.AvoirFournisseur.ViewModels;
+using GestionCommerciale.Modules.BonRetourFournisseur.ViewModels;
 using GestionCommerciale.Modules.Auth.Services;
 using GestionCommerciale.Modules.Charges.ViewModels;
 using GestionCommerciale.Modules.Devis.ViewModels;
@@ -71,7 +71,7 @@ public partial class AppShellViewModel : BaseViewModel
     [ObservableProperty] private string _navBonAchat = string.Empty;
     [ObservableProperty] private string _navFactures = string.Empty;
     [ObservableProperty] private string _navBonRetour = string.Empty;
-    [ObservableProperty] private string _navAvoirFournisseur = string.Empty;
+    [ObservableProperty] private string _navBonRetourFournisseur = string.Empty;
     [ObservableProperty] private string _navCharges = string.Empty;
     [ObservableProperty] private string _navFournisseurs = string.Empty;
     [ObservableProperty] private string _navBc = string.Empty;
@@ -97,7 +97,7 @@ public partial class AppShellViewModel : BaseViewModel
     [ObservableProperty] private bool _isNavBonAchatActive;
     [ObservableProperty] private bool _isNavFacturesActive;
     [ObservableProperty] private bool _isNavBonRetourActive;
-    [ObservableProperty] private bool _isNavAvoirFournisseurActive;
+    [ObservableProperty] private bool _isNavBonRetourFournisseurActive;
     [ObservableProperty] private bool _isNavChargesActive;
     [ObservableProperty] private bool _isNavBcActive;
     [ObservableProperty] private bool _isNavBrActive;
@@ -121,7 +121,7 @@ public partial class AppShellViewModel : BaseViewModel
         NavBonAchat = _locale.T("Nav_BonAchat");
         NavFactures = _locale.T("Nav_Factures");
         NavBonRetour = _locale.T("Nav_BonRetour");
-        NavAvoirFournisseur = _locale.T("Nav_AvoirFournisseur");
+        NavBonRetourFournisseur = _locale.T("Nav_BonRetourFournisseur");
         NavCharges = _locale.T("Nav_Charges");
         NavFournisseurs = _locale.T("Nav_Fournisseurs");
         NavBc = _locale.T("Nav_BC");
@@ -170,7 +170,7 @@ public partial class AppShellViewModel : BaseViewModel
     public bool ShowNavFactures => _session.CanAccessFacturation;
     public bool ShowNavBonRetour => _session.CanAccessBonRetour;
     public bool ShowNavFacturesFournisseur => _session.CanAccessFacturation;
-    public bool ShowNavAvoirFournisseur => _session.CanAccessBonRetour;
+    public bool ShowNavBonRetourFournisseur => _session.CanAccessBonRetour;
     public bool ShowNavCharges => _session.CanAccessCharges;
     public bool ShowNavReports => _session.CanAccessReporting;
     public bool ShowNavSettings => _session.CanAccessSettings;
@@ -252,7 +252,7 @@ public partial class AppShellViewModel : BaseViewModel
     private void GoFacturesFournisseur() => _workspace.Open(_sp.GetRequiredService<FactureFournisseurListViewModel>());
 
     [RelayCommand]
-    private void GoAvoirFournisseur() => _workspace.Open(_sp.GetRequiredService<AvoirFournisseurListViewModel>());
+    private void GoBonRetourFournisseur() => _workspace.Open(_sp.GetRequiredService<BonRetourFournisseurListViewModel>());
 
     [RelayCommand]
     private void GoCharges() => _workspace.Open(_sp.GetRequiredService<ChargeListViewModel>());
@@ -294,7 +294,7 @@ public partial class AppShellViewModel : BaseViewModel
         IsNavBonAchatActive = p is BonAchatListViewModel or BonAchatEditViewModel;
         IsNavFacturesActive = p is FactureListViewModel or FactureEditViewModel;
         IsNavBonRetourActive = p is BonRetourListViewModel or BonRetourEditViewModel;
-        IsNavAvoirFournisseurActive = p is AvoirFournisseurListViewModel or AvoirFournisseurEditViewModel;
+        IsNavBonRetourFournisseurActive = p is BonRetourFournisseurListViewModel or BonRetourFournisseurEditViewModel;
         IsNavChargesActive = p is ChargeListViewModel or ChargeEditViewModel;
         IsNavBcActive = p is BCListViewModel or BCEditViewModel;
         IsNavBrActive = p is BRListViewModel or BREditViewModel;

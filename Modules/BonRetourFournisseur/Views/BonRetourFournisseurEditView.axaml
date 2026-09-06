@@ -1,11 +1,11 @@
 <UserControl xmlns="https://github.com/avaloniaui"
              xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
-             xmlns:vm="using:GestionCommerciale.Modules.AvoirFournisseur.ViewModels"
+             xmlns:vm="using:GestionCommerciale.Modules.BonRetourFournisseur.ViewModels"
              xmlns:m="using:GestionCommerciale.Modules.Tiers.Models"
              xmlns:stock="using:GestionCommerciale.Modules.Stock.Models"
-             x:Class="GestionCommerciale.Modules.AvoirFournisseur.Views.AvoirFournisseurEditView"
+             x:Class="GestionCommerciale.Modules.BonRetourFournisseur.Views.BonRetourFournisseurEditView"
              x:Name="ThisView"
-             x:DataType="vm:AvoirFournisseurEditViewModel">
+             x:DataType="vm:BonRetourFournisseurEditViewModel">
   <ScrollViewer>
     <StackPanel Spacing="10">
       <StackPanel Orientation="Horizontal" Spacing="8">
@@ -89,15 +89,15 @@
                   Background="{DynamicResource CourseraSurfaceMutedBrush}" Padding="8,8">
             <Grid>
               <Grid.ColumnDefinitions>
-                <ColumnDefinition Width="{Binding $parent[UserControl].((vm:AvoirFournisseurEditViewModel)DataContext).LineGridColumns.ColRef}"/>
-                <ColumnDefinition Width="{Binding $parent[UserControl].((vm:AvoirFournisseurEditViewModel)DataContext).LineGridColumns.ColDesignation}"/>
-                <ColumnDefinition Width="{Binding $parent[UserControl].((vm:AvoirFournisseurEditViewModel)DataContext).LineGridColumns.ColQte}"/>
-                <ColumnDefinition Width="{Binding $parent[UserControl].((vm:AvoirFournisseurEditViewModel)DataContext).LineGridColumns.ColCond}"/>
-                <ColumnDefinition Width="{Binding $parent[UserControl].((vm:AvoirFournisseurEditViewModel)DataContext).LineGridColumns.ColPuHt}"/>
-                <ColumnDefinition Width="{Binding $parent[UserControl].((vm:AvoirFournisseurEditViewModel)DataContext).LineGridColumns.ColRemise}"/>
-                <ColumnDefinition Width="{Binding $parent[UserControl].((vm:AvoirFournisseurEditViewModel)DataContext).LineGridColumns.ColTva}"/>
-                <ColumnDefinition Width="{Binding $parent[UserControl].((vm:AvoirFournisseurEditViewModel)DataContext).LineGridColumns.ColMontantHt}"/>
-                <ColumnDefinition Width="{Binding $parent[UserControl].((vm:AvoirFournisseurEditViewModel)DataContext).LineGridColumns.ColMontantTtc}"/>
+                <ColumnDefinition Width="{Binding $parent[UserControl].((vm:BonRetourFournisseurEditViewModel)DataContext).LineGridColumns.ColRef}"/>
+                <ColumnDefinition Width="{Binding $parent[UserControl].((vm:BonRetourFournisseurEditViewModel)DataContext).LineGridColumns.ColDesignation}"/>
+                <ColumnDefinition Width="{Binding $parent[UserControl].((vm:BonRetourFournisseurEditViewModel)DataContext).LineGridColumns.ColQte}"/>
+                <ColumnDefinition Width="{Binding $parent[UserControl].((vm:BonRetourFournisseurEditViewModel)DataContext).LineGridColumns.ColCond}"/>
+                <ColumnDefinition Width="{Binding $parent[UserControl].((vm:BonRetourFournisseurEditViewModel)DataContext).LineGridColumns.ColPuHt}"/>
+                <ColumnDefinition Width="{Binding $parent[UserControl].((vm:BonRetourFournisseurEditViewModel)DataContext).LineGridColumns.ColRemise}"/>
+                <ColumnDefinition Width="{Binding $parent[UserControl].((vm:BonRetourFournisseurEditViewModel)DataContext).LineGridColumns.ColTva}"/>
+                <ColumnDefinition Width="{Binding $parent[UserControl].((vm:BonRetourFournisseurEditViewModel)DataContext).LineGridColumns.ColMontantHt}"/>
+                <ColumnDefinition Width="{Binding $parent[UserControl].((vm:BonRetourFournisseurEditViewModel)DataContext).LineGridColumns.ColMontantTtc}"/>
               </Grid.ColumnDefinitions>
               <TextBlock Grid.Column="0" Text="{Binding LblDocColRef}" FontWeight="SemiBold" VerticalAlignment="Center" Margin="0,0,8,0" IsVisible="{Binding LineGridColumns.ShowReference}"/>
               <TextBlock Grid.Column="1" Text="{Binding LblDocColDesignation}" FontWeight="SemiBold" VerticalAlignment="Center" Margin="0,0,8,0" IsVisible="{Binding LineGridColumns.ShowDesignation}"/>
@@ -114,48 +114,48 @@
                    BorderThickness="1" BorderBrush="{DynamicResource CourseraBorderBrush}" CornerRadius="0,0,8,8"
                    Background="{DynamicResource CourseraSurfaceBrush}">
             <ListBox.ItemTemplate>
-              <DataTemplate DataType="vm:AvoirFournisseurLineRow">
+              <DataTemplate DataType="vm:BonRetourFournisseurLineRow">
                 <Border Padding="6,2" BorderBrush="#18000000" BorderThickness="0,0,0,1">
                   <Grid MinHeight="34">
                     <Grid.ColumnDefinitions>
-                      <ColumnDefinition Width="{Binding $parent[UserControl].((vm:AvoirFournisseurEditViewModel)DataContext).LineGridColumns.ColRef}"/>
-                      <ColumnDefinition Width="{Binding $parent[UserControl].((vm:AvoirFournisseurEditViewModel)DataContext).LineGridColumns.ColDesignation}"/>
-                      <ColumnDefinition Width="{Binding $parent[UserControl].((vm:AvoirFournisseurEditViewModel)DataContext).LineGridColumns.ColQte}"/>
-                      <ColumnDefinition Width="{Binding $parent[UserControl].((vm:AvoirFournisseurEditViewModel)DataContext).LineGridColumns.ColCond}"/>
-                      <ColumnDefinition Width="{Binding $parent[UserControl].((vm:AvoirFournisseurEditViewModel)DataContext).LineGridColumns.ColPuHt}"/>
-                      <ColumnDefinition Width="{Binding $parent[UserControl].((vm:AvoirFournisseurEditViewModel)DataContext).LineGridColumns.ColRemise}"/>
-                      <ColumnDefinition Width="{Binding $parent[UserControl].((vm:AvoirFournisseurEditViewModel)DataContext).LineGridColumns.ColTva}"/>
-                      <ColumnDefinition Width="{Binding $parent[UserControl].((vm:AvoirFournisseurEditViewModel)DataContext).LineGridColumns.ColMontantHt}"/>
-                      <ColumnDefinition Width="{Binding $parent[UserControl].((vm:AvoirFournisseurEditViewModel)DataContext).LineGridColumns.ColMontantTtc}"/>
+                      <ColumnDefinition Width="{Binding $parent[UserControl].((vm:BonRetourFournisseurEditViewModel)DataContext).LineGridColumns.ColRef}"/>
+                      <ColumnDefinition Width="{Binding $parent[UserControl].((vm:BonRetourFournisseurEditViewModel)DataContext).LineGridColumns.ColDesignation}"/>
+                      <ColumnDefinition Width="{Binding $parent[UserControl].((vm:BonRetourFournisseurEditViewModel)DataContext).LineGridColumns.ColQte}"/>
+                      <ColumnDefinition Width="{Binding $parent[UserControl].((vm:BonRetourFournisseurEditViewModel)DataContext).LineGridColumns.ColCond}"/>
+                      <ColumnDefinition Width="{Binding $parent[UserControl].((vm:BonRetourFournisseurEditViewModel)DataContext).LineGridColumns.ColPuHt}"/>
+                      <ColumnDefinition Width="{Binding $parent[UserControl].((vm:BonRetourFournisseurEditViewModel)DataContext).LineGridColumns.ColRemise}"/>
+                      <ColumnDefinition Width="{Binding $parent[UserControl].((vm:BonRetourFournisseurEditViewModel)DataContext).LineGridColumns.ColTva}"/>
+                      <ColumnDefinition Width="{Binding $parent[UserControl].((vm:BonRetourFournisseurEditViewModel)DataContext).LineGridColumns.ColMontantHt}"/>
+                      <ColumnDefinition Width="{Binding $parent[UserControl].((vm:BonRetourFournisseurEditViewModel)DataContext).LineGridColumns.ColMontantTtc}"/>
                     </Grid.ColumnDefinitions>
                     <TextBox Grid.Column="0"
                              Text="{Binding Reference}"
                              Watermark="Référence."
                              Padding="6,4"
                              Margin="0,0,8,0"
-                             IsReadOnly="{Binding !$parent[UserControl].((vm:AvoirFournisseurEditViewModel)DataContext).CanEditDraft}"
-                             IsVisible="{Binding $parent[UserControl].((vm:AvoirFournisseurEditViewModel)DataContext).LineGridColumns.ShowReference}"/>
+                             IsReadOnly="{Binding !$parent[UserControl].((vm:BonRetourFournisseurEditViewModel)DataContext).CanEditDraft}"
+                             IsVisible="{Binding $parent[UserControl].((vm:BonRetourFournisseurEditViewModel)DataContext).LineGridColumns.ShowReference}"/>
                     <TextBox Grid.Column="1"
                              Text="{Binding Designation}"
                              Watermark="…"
                              Padding="6,4"
                              Margin="0,0,8,0"
-                             IsReadOnly="{Binding !$parent[UserControl].((vm:AvoirFournisseurEditViewModel)DataContext).CanEditDraft}"
-                             IsVisible="{Binding $parent[UserControl].((vm:AvoirFournisseurEditViewModel)DataContext).LineGridColumns.ShowDesignation}"/>
+                             IsReadOnly="{Binding !$parent[UserControl].((vm:BonRetourFournisseurEditViewModel)DataContext).CanEditDraft}"
+                             IsVisible="{Binding $parent[UserControl].((vm:BonRetourFournisseurEditViewModel)DataContext).LineGridColumns.ShowDesignation}"/>
                     <NumericUpDown Grid.Column="2" ShowButtonSpinner="False" Value="{Binding Quantite}" FormatString="0.##" Minimum="0" Increment="1"
-                                   HorizontalAlignment="Stretch" Margin="0,0,8,0" IsEnabled="{Binding $parent[UserControl].((vm:AvoirFournisseurEditViewModel)DataContext).CanEditDraft}" IsVisible="{Binding $parent[UserControl].((vm:AvoirFournisseurEditViewModel)DataContext).LineGridColumns.ShowQuantite}"/>
-                    <TextBox Grid.Column="3" Text="{Binding Conditionnement}" Watermark="{Binding $parent[UserControl].((vm:AvoirFournisseurEditViewModel)DataContext).WmDocLineUnite}" Padding="6,4" Margin="0,0,8,0"
-                             IsReadOnly="{Binding !$parent[UserControl].((vm:AvoirFournisseurEditViewModel)DataContext).CanEditDraft}" IsVisible="{Binding $parent[UserControl].((vm:AvoirFournisseurEditViewModel)DataContext).LineGridColumns.ShowConditionnement}"/>
+                                   HorizontalAlignment="Stretch" Margin="0,0,8,0" IsEnabled="{Binding $parent[UserControl].((vm:BonRetourFournisseurEditViewModel)DataContext).CanEditDraft}" IsVisible="{Binding $parent[UserControl].((vm:BonRetourFournisseurEditViewModel)DataContext).LineGridColumns.ShowQuantite}"/>
+                    <TextBox Grid.Column="3" Text="{Binding Conditionnement}" Watermark="{Binding $parent[UserControl].((vm:BonRetourFournisseurEditViewModel)DataContext).WmDocLineUnite}" Padding="6,4" Margin="0,0,8,0"
+                             IsReadOnly="{Binding !$parent[UserControl].((vm:BonRetourFournisseurEditViewModel)DataContext).CanEditDraft}" IsVisible="{Binding $parent[UserControl].((vm:BonRetourFournisseurEditViewModel)DataContext).LineGridColumns.ShowConditionnement}"/>
                     <NumericUpDown Grid.Column="4" ShowButtonSpinner="False" Value="{Binding PrixUnitaireHt}" FormatString="0.##" Minimum="0" Increment="0.01"
-                                   HorizontalAlignment="Stretch" Margin="0,0,8,0" IsEnabled="{Binding $parent[UserControl].((vm:AvoirFournisseurEditViewModel)DataContext).CanEditDraft}" IsVisible="{Binding $parent[UserControl].((vm:AvoirFournisseurEditViewModel)DataContext).LineGridColumns.ShowPuHt}"/>
+                                   HorizontalAlignment="Stretch" Margin="0,0,8,0" IsEnabled="{Binding $parent[UserControl].((vm:BonRetourFournisseurEditViewModel)DataContext).CanEditDraft}" IsVisible="{Binding $parent[UserControl].((vm:BonRetourFournisseurEditViewModel)DataContext).LineGridColumns.ShowPuHt}"/>
                     <NumericUpDown Grid.Column="5" ShowButtonSpinner="False" Value="{Binding Remise}" FormatString="N2" Minimum="0" Maximum="100" Increment="1"
-                                   HorizontalAlignment="Stretch" Margin="0,0,8,0" IsEnabled="{Binding $parent[UserControl].((vm:AvoirFournisseurEditViewModel)DataContext).CanEditDraft}" IsVisible="{Binding $parent[UserControl].((vm:AvoirFournisseurEditViewModel)DataContext).LineGridColumns.ShowRemise}"/>
+                                   HorizontalAlignment="Stretch" Margin="0,0,8,0" IsEnabled="{Binding $parent[UserControl].((vm:BonRetourFournisseurEditViewModel)DataContext).CanEditDraft}" IsVisible="{Binding $parent[UserControl].((vm:BonRetourFournisseurEditViewModel)DataContext).LineGridColumns.ShowRemise}"/>
                     <NumericUpDown Grid.Column="6" ShowButtonSpinner="False" Value="{Binding TauxTva}" FormatString="0.##" Minimum="0" Increment="1"
-                                   HorizontalAlignment="Stretch" Margin="0,0,8,0" IsEnabled="{Binding $parent[UserControl].((vm:AvoirFournisseurEditViewModel)DataContext).CanEditDraft}" IsVisible="{Binding $parent[UserControl].((vm:AvoirFournisseurEditViewModel)DataContext).LineGridColumns.ShowTva}"/>
+                                   HorizontalAlignment="Stretch" Margin="0,0,8,0" IsEnabled="{Binding $parent[UserControl].((vm:BonRetourFournisseurEditViewModel)DataContext).CanEditDraft}" IsVisible="{Binding $parent[UserControl].((vm:BonRetourFournisseurEditViewModel)DataContext).LineGridColumns.ShowTva}"/>
                     <TextBlock Grid.Column="7" Text="{Binding MontantHt, StringFormat=\{0:N2\}}" VerticalAlignment="Center"
-                               HorizontalAlignment="Right" Margin="0,0,8,0" Opacity="0.9" IsVisible="{Binding $parent[UserControl].((vm:AvoirFournisseurEditViewModel)DataContext).LineGridColumns.ShowMontantHt}"/>
+                               HorizontalAlignment="Right" Margin="0,0,8,0" Opacity="0.9" IsVisible="{Binding $parent[UserControl].((vm:BonRetourFournisseurEditViewModel)DataContext).LineGridColumns.ShowMontantHt}"/>
                     <TextBlock Grid.Column="8" Text="{Binding MontantTtc, StringFormat=\{0:N2\}}" VerticalAlignment="Center"
-                               HorizontalAlignment="Right" Opacity="0.9" IsVisible="{Binding $parent[UserControl].((vm:AvoirFournisseurEditViewModel)DataContext).LineGridColumns.ShowMontantTtc}"/>
+                               HorizontalAlignment="Right" Opacity="0.9" IsVisible="{Binding $parent[UserControl].((vm:BonRetourFournisseurEditViewModel)DataContext).LineGridColumns.ShowMontantTtc}"/>
                   </Grid>
                 </Border>
               </DataTemplate>

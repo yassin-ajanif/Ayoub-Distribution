@@ -2,11 +2,11 @@ using System.ComponentModel;
 using Avalonia.Controls;
 using Avalonia.Markup.Xaml;
 
-namespace GestionCommerciale.Modules.AvoirFournisseur.Views;
+namespace GestionCommerciale.Modules.BonRetourFournisseur.Views;
 
-public partial class AvoirFournisseurListView : UserControl
+public partial class BonRetourFournisseurListView : UserControl
 {
-    public AvoirFournisseurListView()
+    public BonRetourFournisseurListView()
     {
         InitializeComponent();
     }
@@ -14,7 +14,7 @@ public partial class AvoirFournisseurListView : UserControl
     protected override void OnAttachedToVisualTree(Avalonia.VisualTreeAttachmentEventArgs e)
     {
         base.OnAttachedToVisualTree(e);
-        if (DataContext is ViewModels.AvoirFournisseurListViewModel vm)
+        if (DataContext is ViewModels.BonRetourFournisseurListViewModel vm)
             vm.LoadCommand.Execute(null);
     }
 

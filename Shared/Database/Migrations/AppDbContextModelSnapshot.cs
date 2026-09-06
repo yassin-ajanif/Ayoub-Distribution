@@ -149,7 +149,7 @@ namespace GestionCommerciale.Shared.Database.Migrations
                     b.ToTable("PaiementsBonAchat");
                 });
 
-            modelBuilder.Entity("GestionCommerciale.Modules.AvoirFournisseur.Models.AvoirFournisseur", b =>
+            modelBuilder.Entity("GestionCommerciale.Modules.BonRetourFournisseur.Models.BonRetourFournisseur", b =>
                 {
                     b.Property<int>("Id")
                         .ValueGeneratedOnAdd()
@@ -183,16 +183,16 @@ namespace GestionCommerciale.Shared.Database.Migrations
 
                     b.HasKey("Id");
 
-                    b.ToTable("AvoirsFournisseurs");
+                    b.ToTable("BonsRetourFournisseurs");
                 });
 
-            modelBuilder.Entity("GestionCommerciale.Modules.AvoirFournisseur.Models.AvoirFournisseurLigne", b =>
+            modelBuilder.Entity("GestionCommerciale.Modules.BonRetourFournisseur.Models.BonRetourFournisseurLigne", b =>
                 {
                     b.Property<int>("Id")
                         .ValueGeneratedOnAdd()
                         .HasColumnType("INTEGER");
 
-                    b.Property<int>("AvoirFournisseurId")
+                    b.Property<int>("BonRetourFournisseurId")
                         .HasColumnType("INTEGER");
 
                     b.Property<string>("Conditionnement")
@@ -229,9 +229,9 @@ namespace GestionCommerciale.Shared.Database.Migrations
 
                     b.HasKey("Id");
 
-                    b.HasIndex("AvoirFournisseurId");
+                    b.HasIndex("BonRetourFournisseurId");
 
-                    b.ToTable("AvoirFournisseurLignes");
+                    b.ToTable("BonRetourFournisseurLignes");
                 });
 
             modelBuilder.Entity("GestionCommerciale.Modules.Charges.Models.Charge", b =>
@@ -1551,15 +1551,15 @@ namespace GestionCommerciale.Shared.Database.Migrations
                     b.Navigation("BonAchat");
                 });
 
-            modelBuilder.Entity("GestionCommerciale.Modules.AvoirFournisseur.Models.AvoirFournisseurLigne", b =>
+            modelBuilder.Entity("GestionCommerciale.Modules.BonRetourFournisseur.Models.BonRetourFournisseurLigne", b =>
                 {
-                    b.HasOne("GestionCommerciale.Modules.AvoirFournisseur.Models.AvoirFournisseur", "AvoirFournisseur")
+                    b.HasOne("GestionCommerciale.Modules.BonRetourFournisseur.Models.BonRetourFournisseur", "BonRetourFournisseur")
                         .WithMany("Lignes")
-                        .HasForeignKey("AvoirFournisseurId")
+                        .HasForeignKey("BonRetourFournisseurId")
                         .OnDelete(DeleteBehavior.Cascade)
                         .IsRequired();
 
-                    b.Navigation("AvoirFournisseur");
+                    b.Navigation("BonRetourFournisseur");
                 });
 
             modelBuilder.Entity("GestionCommerciale.Modules.Charges.Models.Charge", b =>
@@ -1797,7 +1797,7 @@ namespace GestionCommerciale.Shared.Database.Migrations
                     b.Navigation("Paiements");
                 });
 
-            modelBuilder.Entity("GestionCommerciale.Modules.AvoirFournisseur.Models.AvoirFournisseur", b =>
+            modelBuilder.Entity("GestionCommerciale.Modules.BonRetourFournisseur.Models.BonRetourFournisseur", b =>
                 {
                     b.Navigation("Lignes");
                 });

@@ -1,4 +1,4 @@
-using GestionCommerciale.Modules.AvoirFournisseur.ViewModels;
+using GestionCommerciale.Modules.BonRetourFournisseur.ViewModels;
 using GestionCommerciale.Modules.Auth.Services;
 using GestionCommerciale.Modules.Auth.ViewModels;
 using GestionCommerciale.Modules.Charges.ViewModels;
@@ -103,8 +103,8 @@ public static class DependencyInjection
         services.AddTransient<FactureFournisseurEditViewModel>();
         services.AddTransient<BonRetourListViewModel>();
         services.AddTransient<BonRetourEditViewModel>();
-        services.AddTransient<AvoirFournisseurListViewModel>();
-        services.AddTransient<AvoirFournisseurEditViewModel>();
+        services.AddTransient<BonRetourFournisseurListViewModel>();
+        services.AddTransient<BonRetourFournisseurEditViewModel>();
         services.AddTransient<ChargeListViewModel>();
         services.AddTransient<ChargeEditViewModel>();
         services.AddSingleton<ReportingViewModel>();

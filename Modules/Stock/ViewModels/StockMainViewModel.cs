@@ -2,7 +2,7 @@ using System.Collections.ObjectModel;
 using CommunityToolkit.Mvvm.ComponentModel;
 using CommunityToolkit.Mvvm.Input;
 using GestionCommerciale.Modules.Auth.Services;
-using GestionCommerciale.Modules.AvoirFournisseur.ViewModels;
+using GestionCommerciale.Modules.BonRetourFournisseur.ViewModels;
 using GestionCommerciale.Modules.Facturation.ViewModels;
 using GestionCommerciale.Modules.Livraison.ViewModels;
 using GestionCommerciale.Modules.Sortie.ViewModels;
@@ -223,8 +223,8 @@ public partial class StockMainViewModel : BaseViewModel
             .Select(m => m.OrigineId!.Value)
             .Distinct()
             .ToList();
-        var avoirFournisseurIds = movements
-            .Where(m => m.OrigineType == StockMovementService.OrigineTypeAvoirFournisseur && m.OrigineId.HasValue)
+        var bonRetourFournisseurIds = movements
+            .Where(m => m.OrigineType == StockMovementService.OrigineTypeBonRetourFournisseur && m.OrigineId.HasValue)
             .Select(m => m.OrigineId!.Value)
             .Distinct()
             .ToList();
@@ -264,10 +264,10 @@ public partial class StockMainViewModel : BaseViewModel
                 .Select(a => new { a.Id, a.ClientId })
                 .ToListAsync(cancellationToken);
 
-        var avoirFournisseurParties = avoirFournisseurIds.Count == 0
+        var bonRetourFournisseurParties = bonRetourFournisseurIds.Count == 0
             ? []
-            : await db.AvoirsFournisseurs.AsNoTracking()
-                .Where(a => avoirFournisseurIds.Contains(a.Id))
+            : await db.BonsRetourFournisseurs.AsNoTracking()
+                .Where(a => bonRetourFournisseurIds.Contains(a.Id))
                 .Select(a => new { a.Id, a.FournisseurId })
                 .ToListAsync(cancellationToken);
 
@@ -276,7 +276,7 @@ public partial class StockMainViewModel : BaseViewModel
             .Concat(baParties.Select(x => x.FournisseurId))
             .Concat(brParties.Select(x => x.FournisseurId))
             .Concat(avoirParties.Select(x => x.ClientId))
-            .Concat(avoirFournisseurParties.Select(x => x.FournisseurId))
+            .Concat(bonRetourFournisseurParties.Select(x => x.FournisseurId))
             .Distinct()
             .ToList();
 
@@ -291,7 +291,7 @@ public partial class StockMainViewModel : BaseViewModel
         var baMap = baParties.ToDictionary(x => x.Id, x => tierNames.GetValueOrDefault(x.FournisseurId, string.Empty));
         var brMap = brParties.ToDictionary(x => x.Id, x => tierNames.GetValueOrDefault(x.FournisseurId, string.Empty));
         var avoirMap = avoirParties.ToDictionary(x => x.Id, x => tierNames.GetValueOrDefault(x.ClientId, string.Empty));
-        var avoirFournisseurMap = avoirFournisseurParties.ToDictionary(x => x.Id, x => tierNames.GetValueOrDefault(x.FournisseurId, string.Empty));
+        var bonRetourFournisseurMap = bonRetourFournisseurParties.ToDictionary(x => x.Id, x => tierNames.GetValueOrDefault(x.FournisseurId, string.Empty));
 
         var blPriceMap = blIds.Count == 0
             ? new Dictionary<(int, int), decimal>()
@@ -338,13 +338,13 @@ public partial class StockMainViewModel : BaseViewModel
                 .GroupBy(l => (l.BonRetourId, l.ProduitId))
                 .ToDictionary(g => g.Key, g => g.Last().PrixUnitaireHT);
 
-        var avoirFournisseurPriceMap = avoirFournisseurIds.Count == 0
+        var bonRetourFournisseurPriceMap = bonRetourFournisseurIds.Count == 0
             ? new Dictionary<(int, int), decimal>()
-            : (await db.AvoirFournisseurLignes.AsNoTracking()
-                .Where(l => avoirFournisseurIds.Contains(l.AvoirFournisseurId))
-                .Select(l => new { l.AvoirFournisseurId, l.ProduitId, l.PrixUnitaireHT })
+            : (await db.BonRetourFournisseurLignes.AsNoTracking()
+                .Where(l => bonRetourFournisseurIds.Contains(l.BonRetourFournisseurId))
+                .Select(l => new { l.BonRetourFournisseurId, l.ProduitId, l.PrixUnitaireHT })
                 .ToListAsync(cancellationToken))
-                .GroupBy(l => (l.AvoirFournisseurId, l.ProduitId))
+                .GroupBy(l => (l.BonRetourFournisseurId, l.ProduitId))
                 .ToDictionary(g => g.Key, g => g.Last().PrixUnitaireHT);
 
         foreach (var m in movements)
@@ -356,12 +356,12 @@ public partial class StockMainViewModel : BaseViewModel
                 StockMovementService.OrigineTypeBonAchat when m.OrigineId is int baId => baMap.GetValueOrDefault(baId, string.Empty),
                 StockMovementService.OrigineTypeBonReception when m.OrigineId is int brId => brMap.GetValueOrDefault(brId, string.Empty),
                 StockMovementService.OrigineTypeBonRetour when m.OrigineId is int bonRetourId => avoirMap.GetValueOrDefault(bonRetourId, string.Empty),
-                StockMovementService.OrigineTypeAvoirFournisseur when m.OrigineId is int avfId => avoirFournisseurMap.GetValueOrDefault(avfId, string.Empty),
+                StockMovementService.OrigineTypeBonRetourFournisseur when m.OrigineId is int avfId => bonRetourFournisseurMap.GetValueOrDefault(avfId, string.Empty),
                 _ => string.Empty
             };
             m.PartyIsSupplier = m.OrigineType is StockMovementService.OrigineTypeBonReception
                 or StockMovementService.OrigineTypeBonAchat
-                or StockMovementService.OrigineTypeAvoirFournisseur;
+                or StockMovementService.OrigineTypeBonRetourFournisseur;
 
             decimal? price = null;
             if (m.OrigineId is int docId)
@@ -373,7 +373,7 @@ public partial class StockMainViewModel : BaseViewModel
                     StockMovementService.OrigineTypeBonAchat when baPriceMap.TryGetValue((docId, m.ProduitId), out var baP) => baP,
                     StockMovementService.OrigineTypeBonReception when brPriceMap.TryGetValue((docId, m.ProduitId), out var brP) => brP,
                     StockMovementService.OrigineTypeBonRetour when avoirPriceMap.TryGetValue((docId, m.ProduitId), out var avP) => avP,
-                    StockMovementService.OrigineTypeAvoirFournisseur when avoirFournisseurPriceMap.TryGetValue((docId, m.ProduitId), out var avfP) => avfP,
+                    StockMovementService.OrigineTypeBonRetourFournisseur when bonRetourFournisseurPriceMap.TryGetValue((docId, m.ProduitId), out var avfP) => avfP,
                     _ => null
                 };
             }
@@ -474,9 +474,9 @@ public partial class StockMainViewModel : BaseViewModel
                 _workspace.Open(vm);
                 break;
             }
-            case StockMovementService.OrigineTypeAvoirFournisseur:
+            case StockMovementService.OrigineTypeBonRetourFournisseur:
             {
-                var vm = _sp.GetRequiredService<AvoirFournisseurEditViewModel>();
+                var vm = _sp.GetRequiredService<BonRetourFournisseurEditViewModel>();
                 vm.Load(id);
                 _workspace.Open(vm);
                 break;

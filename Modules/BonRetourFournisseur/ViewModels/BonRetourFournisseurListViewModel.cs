@@ -1,7 +1,7 @@
 using System.Collections.ObjectModel;
 using CommunityToolkit.Mvvm.ComponentModel;
 using CommunityToolkit.Mvvm.Input;
-using GestionCommerciale.Modules.AvoirFournisseur.Models;
+using GestionCommerciale.Modules.BonRetourFournisseur.Models;
 using GestionCommerciale.Modules.Stock.Services;
 using GestionCommerciale.Modules.Auth.Services;
 using GestionCommerciale.Shared.Database;
@@ -11,9 +11,9 @@ using GestionCommerciale.Shared.ViewModels;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.DependencyInjection;
 
-namespace GestionCommerciale.Modules.AvoirFournisseur.ViewModels;
+namespace GestionCommerciale.Modules.BonRetourFournisseur.ViewModels;
 
-public partial class AvoirFournisseurListViewModel : BaseViewModel
+public partial class BonRetourFournisseurListViewModel : BaseViewModel
 {
     private readonly IDbContextFactory<AppDbContext> _dbFactory;
     private readonly IDialogService _dialog;
@@ -23,7 +23,7 @@ public partial class AvoirFournisseurListViewModel : BaseViewModel
     private readonly ILocaleService _locale;
     private readonly IStockMovementService _stock;
 
-    public AvoirFournisseurListViewModel(
+    public BonRetourFournisseurListViewModel(
         IDbContextFactory<AppDbContext> dbFactory,
         IDialogService dialog,
         WorkspaceNavigator workspaceNavigator,
@@ -39,7 +39,7 @@ public partial class AvoirFournisseurListViewModel : BaseViewModel
         _settings = settings;
         _locale = locale;
         _stock = stock;
-        Title = _locale.T("Avf_Title");
+        Title = _locale.T("Brf_Title");
         RefreshUi();
         _locale.CultureApplied += (_, _) => RefreshUi();
         Pagination = new PaginationHelper(() => _ = LoadPageAsync(CancellationToken.None));
@@ -56,11 +56,11 @@ public partial class AvoirFournisseurListViewModel : BaseViewModel
     [ObservableProperty] private string _colMotif = string.Empty;
 
     [ObservableProperty] private string _searchText = string.Empty;
-    [ObservableProperty] private AvoirFournisseurListRow? _selected;
+    [ObservableProperty] private BonRetourFournisseurListRow? _selected;
 
     private DateTime? _dateFrom, _dateTo;
 
-    public ObservableCollection<AvoirFournisseurListRow> Rows { get; } = [];
+    public ObservableCollection<BonRetourFournisseurListRow> Rows { get; } = [];
     public PaginationHelper Pagination { get; }
 
     private void RefreshUi()
@@ -69,7 +69,7 @@ public partial class AvoirFournisseurListViewModel : BaseViewModel
         BtnPdf = _locale.T("Btn_Pdf");
         BtnFilterDate = _locale.T("Btn_FilterDate");
         ColNumero = _locale.T("DevisList_ColRef");
-        ColFournisseur = _locale.T("Avf_ColFournisseur");
+        ColFournisseur = _locale.T("Brf_ColFournisseur");
         ColDate = _locale.T("DevisList_ColDate");
         ColHt = _locale.T("DevisList_ColHt");
         ColTtc = _locale.T("DevisList_ColTtc");
@@ -90,7 +90,7 @@ public partial class AvoirFournisseurListViewModel : BaseViewModel
             var devise = string.IsNullOrWhiteSpace(cfg.Devise) ? "MAD" : cfg.Devise.Trim();
 
             await using var db = await _dbFactory.CreateDbContextAsync(ct);
-            var q = db.Set<Models.AvoirFournisseur>().AsNoTracking().Include(d => d.Lignes).AsQueryable();
+            var q = db.Set<Models.BonRetourFournisseur>().AsNoTracking().Include(d => d.Lignes).AsQueryable();
             if (_dateFrom.HasValue) q = q.Where(d => d.Date >= _dateFrom.Value);
             if (_dateTo.HasValue) q = q.Where(d => d.Date <= _dateTo.Value);
 
@@ -111,7 +111,7 @@ public partial class AvoirFournisseurListViewModel : BaseViewModel
             var selId = Selected?.Doc.Id;
             Rows.Clear();
             foreach (var d in docs)
-                Rows.Add(AvoirFournisseurListRow.Create(d, fours.GetValueOrDefault(d.FournisseurId, "?"), devise, _locale));
+                Rows.Add(BonRetourFournisseurListRow.Create(d, fours.GetValueOrDefault(d.FournisseurId, "?"), devise, _locale));
             Pagination.TotalCount = total;
             if (selId is { } id)
                 Selected = Rows.FirstOrDefault(x => x.Doc.Id == id);
@@ -128,7 +128,7 @@ public partial class AvoirFournisseurListViewModel : BaseViewModel
     [RelayCommand]
     private void New()
     {
-        var vm = _sp.GetRequiredService<AvoirFournisseurEditViewModel>();
+        var vm = _sp.GetRequiredService<BonRetourFournisseurEditViewModel>();
         vm.Load(null);
         _workspace.Open(vm);
     }
@@ -137,7 +137,7 @@ public partial class AvoirFournisseurListViewModel : BaseViewModel
     private void OpenSelected()
     {
         if (Selected == null) return;
-        var vm = _sp.GetRequiredService<AvoirFournisseurEditViewModel>();
+        var vm = _sp.GetRequiredService<BonRetourFournisseurEditViewModel>();
         vm.Load(Selected.Doc.Id);
         _workspace.Open(vm);
     }
@@ -146,18 +146,18 @@ public partial class AvoirFournisseurListViewModel : BaseViewModel
     private async Task DeleteAsync(CancellationToken cancellationToken)
     {
         if (Selected == null) return;
-        if (!await _dialog.ConfirmAsync(_locale.T("Avf_Title"),
-                _locale.Tf("Avf_ConfirmDelete", Selected.Doc.Numero), cancellationToken))
+        if (!await _dialog.ConfirmAsync(_locale.T("Brf_Title"),
+                _locale.Tf("Brf_ConfirmDelete", Selected.Doc.Numero), cancellationToken))
             return;
 
         IsBusy = true;
         try
         {
             await using var db = await _dbFactory.CreateDbContextAsync(cancellationToken);
-            var entity = await db.Set<Models.AvoirFournisseur>()
+            var entity = await db.Set<Models.BonRetourFournisseur>()
                 .Include(d => d.Lignes)
                 .FirstAsync(d => d.Id == Selected.Doc.Id, cancellationToken);
-            await _stock.SyncAvoirFournisseurStockAsync(db, entity.Id, entity.Numero, false, [], null, cancellationToken);
+            await _stock.SyncBonRetourFournisseurStockAsync(db, entity.Id, entity.Numero, false, [], null, cancellationToken);
             db.Remove(entity);
             await db.SaveChangesAsync(cancellationToken);
             await LoadAsync(cancellationToken);

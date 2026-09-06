@@ -1,7 +1,7 @@
 using GestionCommerciale.Modules.Devis.Models;
 using GestionCommerciale.Modules.Facturation.Models;
 using GestionCommerciale.Modules.Livraison.Models;
-using GestionCommerciale.Modules.AvoirFournisseur.Models;
+using GestionCommerciale.Modules.BonRetourFournisseur.Models;
 using GestionCommerciale.Modules.Charges.Models;
 using GestionCommerciale.Modules.CommandeFournisseur.Models;
 using GestionCommerciale.Modules.CommandeClient.Models;
@@ -47,8 +47,8 @@ public class AppDbContext : DbContext
     public DbSet<PaiementBonAchat> PaiementsBonAchat => Set<PaiementBonAchat>();
     public DbSet<BonRetour> BonsRetour => Set<BonRetour>();
     public DbSet<BonRetourLigne> BonRetourLignes => Set<BonRetourLigne>();
-    public DbSet<AvoirFournisseur> AvoirsFournisseurs => Set<AvoirFournisseur>();
-    public DbSet<AvoirFournisseurLigne> AvoirFournisseurLignes => Set<AvoirFournisseurLigne>();
+    public DbSet<BonRetourFournisseur> BonsRetourFournisseurs => Set<BonRetourFournisseur>();
+    public DbSet<BonRetourFournisseurLigne> BonRetourFournisseurLignes => Set<BonRetourFournisseurLigne>();
     public DbSet<TypeCharge> TypesCharges => Set<TypeCharge>();
     public DbSet<Charge> Charges => Set<Charge>();
     public DbSet<AppSettingsRow> AppSettings => Set<AppSettingsRow>();
@@ -189,9 +189,9 @@ public class AppDbContext : DbContext
             e.HasMany(a => a.Lignes).WithOne(l => l.BonRetour).HasForeignKey(l => l.BonRetourId).OnDelete(DeleteBehavior.Cascade);
         });
 
-        modelBuilder.Entity<AvoirFournisseur>(e =>
+        modelBuilder.Entity<BonRetourFournisseur>(e =>
         {
-            e.HasMany(a => a.Lignes).WithOne(l => l.AvoirFournisseur).HasForeignKey(l => l.AvoirFournisseurId).OnDelete(DeleteBehavior.Cascade);
+            e.HasMany(a => a.Lignes).WithOne(l => l.BonRetourFournisseur).HasForeignKey(l => l.BonRetourFournisseurId).OnDelete(DeleteBehavior.Cascade);
         });
 
         modelBuilder.Entity<TypeCharge>(e =>

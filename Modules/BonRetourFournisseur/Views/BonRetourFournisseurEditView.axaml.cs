@@ -1,11 +1,11 @@
 using Avalonia.Controls;
 using Avalonia.Markup.Xaml;
 
-namespace GestionCommerciale.Modules.AvoirFournisseur.Views;
+namespace GestionCommerciale.Modules.BonRetourFournisseur.Views;
 
-public partial class AvoirFournisseurEditView : UserControl
+public partial class BonRetourFournisseurEditView : UserControl
 {
-    public AvoirFournisseurEditView()
+    public BonRetourFournisseurEditView()
     {
         InitializeComponent();
     }

@@ -1,4 +1,4 @@
-using GestionCommerciale.Modules.AvoirFournisseur.Models;
+using GestionCommerciale.Modules.BonRetourFournisseur.Models;
 using GestionCommerciale.Modules.CommandeFournisseur.Models;
 using GestionCommerciale.Modules.CommandeClient.Models;
 using GestionCommerciale.Modules.Devis.Models;
@@ -16,7 +16,7 @@ namespace GestionCommerciale.Shared.Services;
 
 public interface IPdfService
 {
-    Task<byte[]> BuildAvoirFournisseurPdfAsync(AvoirFournisseur doc, DocumentPartyPdfInfo party, CancellationToken cancellationToken = default);
+    Task<byte[]> BuildBonRetourFournisseurPdfAsync(BonRetourFournisseur doc, DocumentPartyPdfInfo party, CancellationToken cancellationToken = default);
     Task<byte[]> BuildDevisPdfAsync(Devis devis, DocumentPartyPdfInfo party, CancellationToken cancellationToken = default);
     Task<byte[]> BuildBonLivraisonPdfAsync(BonLivraison bl, DocumentPartyPdfInfo party, CancellationToken cancellationToken = default);
     Task<byte[]> BuildBonReceptionPdfAsync(BonReception br, DocumentPartyPdfInfo party, CancellationToken cancellationToken = default);

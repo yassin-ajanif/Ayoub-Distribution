@@ -2,21 +2,21 @@ using System.Globalization;
 using GestionCommerciale.Shared.Helpers;
 using GestionCommerciale.Shared.Services;
 
-namespace GestionCommerciale.Modules.AvoirFournisseur.ViewModels;
+namespace GestionCommerciale.Modules.BonRetourFournisseur.ViewModels;
 
-public sealed class AvoirFournisseurListRow
+public sealed class BonRetourFournisseurListRow
 {
-    public required Models.AvoirFournisseur Doc { get; init; }
+    public required Models.BonRetourFournisseur Doc { get; init; }
     public string FournisseurNom { get; init; } = string.Empty;
     public string DateShort { get; init; } = string.Empty;
     public string HtLabel { get; init; } = string.Empty;
     public string TtcLabel { get; init; } = string.Empty;
     public string NotePreview { get; init; } = string.Empty;
 
-    public static AvoirFournisseurListRow Create(Models.AvoirFournisseur doc, string fournisseurNom, string devise, ILocaleService locale)
+    public static BonRetourFournisseurListRow Create(Models.BonRetourFournisseur doc, string fournisseurNom, string devise, ILocaleService locale)
     {
-        var (ht, _, ttc) = DocumentTotalsHelper.AvoirFournisseurTotals(doc.Lignes ?? []);
-        return new AvoirFournisseurListRow
+        var (ht, _, ttc) = DocumentTotalsHelper.BonRetourFournisseurTotals(doc.Lignes ?? []);
+        return new BonRetourFournisseurListRow
         {
             Doc = doc,
             FournisseurNom = fournisseurNom,

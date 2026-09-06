@@ -1,4 +1,4 @@
-using GestionCommerciale.Modules.AvoirFournisseur.Models;
+using GestionCommerciale.Modules.BonRetourFournisseur.Models;
 using GestionCommerciale.Modules.Facturation.Models;
 using GestionCommerciale.Modules.Facturation.Services;
 using GestionCommerciale.Shared.Database;
@@ -42,7 +42,7 @@ public sealed class SupplierAccountStatementService : ISupplierAccountStatementS
             })
             .ToListAsync(cancellationToken);
 
-        var avoirs = await db.AvoirsFournisseurs.AsNoTracking()
+        var avoirs = await db.BonsRetourFournisseurs.AsNoTracking()
             .Where(a => a.FournisseurId == fournisseurId)
             .Select(a => new
             {
@@ -79,14 +79,14 @@ public sealed class SupplierAccountStatementService : ISupplierAccountStatementS
 
         foreach (var a in avoirs)
         {
-            var lignes = a.Lignes.Select(l => new AvoirFournisseurLigne
+            var lignes = a.Lignes.Select(l => new BonRetourFournisseurLigne
             {
                 Quantite = l.Quantite,
                 PrixUnitaireHT = l.PrixUnitaireHT,
                 Remise = l.Remise,
                 TauxTVA = l.TauxTVA
             }).ToList();
-            var (_, _, ttc) = DocumentTotalsHelper.AvoirFournisseurTotals(lignes);
+            var (_, _, ttc) = DocumentTotalsHelper.BonRetourFournisseurTotals(lignes);
             if (ttc <= 0) continue;
 
             var observation = string.IsNullOrWhiteSpace(a.Motif) ? string.Empty : a.Motif.Trim();
@@ -94,7 +94,7 @@ public sealed class SupplierAccountStatementService : ISupplierAccountStatementS
                 a.Date.Date,
                 ClientAccountEntryKind.BonRetour,
                 a.Id,
-                _locale.Tf("SupplierLedger_AvoirFmt", a.Numero),
+                _locale.Tf("SupplierLedger_BonRetourFmt", a.Numero),
                 observation,
                 0,
                 ttc));

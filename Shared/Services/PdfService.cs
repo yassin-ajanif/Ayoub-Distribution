@@ -1,4 +1,4 @@
-using GestionCommerciale.Modules.AvoirFournisseur.Models;
+using GestionCommerciale.Modules.BonRetourFournisseur.Models;
 using GestionCommerciale.Modules.CommandeFournisseur.Models;
 using GestionCommerciale.Modules.CommandeClient.Models;
 using GestionCommerciale.Modules.Devis.Models;
@@ -502,12 +502,12 @@ public sealed class PdfService : IPdfService
         return CommercialDocumentPdfRenderer.Render(model, TryLoadLogoBytes(cfg.SocieteLogoPath));
     }
 
-    public async Task<byte[]> BuildAvoirFournisseurPdfAsync(AvoirFournisseur doc, DocumentPartyPdfInfo party, CancellationToken cancellationToken = default)
+    public async Task<byte[]> BuildBonRetourFournisseurPdfAsync(BonRetourFournisseur doc, DocumentPartyPdfInfo party, CancellationToken cancellationToken = default)
     {
         var cfg = await _settings.GetAsync(cancellationToken);
         var meta = await LoadProductMetaAsync(doc.Lignes.Select(l => l.ProduitId), cancellationToken);
-        var totals = DocumentTotalsHelper.AvoirFournisseurTotals(doc.Lignes);
-        var vis = _uiPreferences.GetDocumentLineColumnVisibility("avoirFournisseur");
+        var totals = DocumentTotalsHelper.BonRetourFournisseurTotals(doc.Lignes);
+        var vis = _uiPreferences.GetDocumentLineColumnVisibility("bonRetourFournisseur");
         var lineData = new List<StandardPdfLine>();
         foreach (var l in doc.Lignes)
         {
@@ -534,7 +534,7 @@ public sealed class PdfService : IPdfService
             new("Date", doc.Date.ToString("dd/MM/yyyy"))
         };
 
-        var model = BaseModel(cfg, "AVOIR FOURNISSEUR", docLines, PartyLines(party, "Fournisseur"), cols, rows, totals, note, vis.ShowMontantTtc);
+        var model = BaseModel(cfg, "BON DE RETOUR FOURNISSEUR", docLines, PartyLines(party, "Fournisseur"), cols, rows, totals, note, vis.ShowMontantTtc);
         return CommercialDocumentPdfRenderer.Render(model, TryLoadLogoBytes(cfg.SocieteLogoPath));
     }
 

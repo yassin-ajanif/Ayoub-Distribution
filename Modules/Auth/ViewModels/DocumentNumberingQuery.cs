@@ -18,7 +18,7 @@ internal static class DocumentNumberingQuery
             "FAC" => db.Factures.AsNoTracking().Select(d => d.Numero).ToListAsync(cancellationToken),
             "FAF" => db.FacturesFournisseurs.AsNoTracking().Select(d => d.Numero).ToListAsync(cancellationToken),
             "BRT" => db.BonsRetour.AsNoTracking().Select(d => d.Numero).ToListAsync(cancellationToken),
-            "AVF" => db.AvoirsFournisseurs.AsNoTracking().Select(d => d.Numero).ToListAsync(cancellationToken),
+            "BRF" => db.BonsRetourFournisseurs.AsNoTracking().Select(d => d.Numero).ToListAsync(cancellationToken),
             _ => Task.FromResult(new List<string>())
         };
 }

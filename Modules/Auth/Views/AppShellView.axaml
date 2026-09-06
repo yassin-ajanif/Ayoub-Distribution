@@ -94,10 +94,10 @@
                     Foreground="{Binding IsNavFacturesFournisseurActive, Converter={x:Static conv:NavTabHighlightConverter.Instance}, ConverterParameter=fg}"
                     BorderBrush="{Binding IsNavFacturesFournisseurActive, Converter={x:Static conv:NavTabHighlightConverter.Instance}, ConverterParameter=border}"/>
             -->
-            <Button Content="{Binding NavAvoirFournisseur}" Command="{Binding GoAvoirFournisseurCommand}" HorizontalAlignment="Stretch" IsVisible="{Binding ShowNavAvoirFournisseur}"
-                    Background="{Binding IsNavAvoirFournisseurActive, Converter={x:Static conv:NavTabHighlightConverter.Instance}, ConverterParameter=bg}"
-                    Foreground="{Binding IsNavAvoirFournisseurActive, Converter={x:Static conv:NavTabHighlightConverter.Instance}, ConverterParameter=fg}"
-                    BorderBrush="{Binding IsNavAvoirFournisseurActive, Converter={x:Static conv:NavTabHighlightConverter.Instance}, ConverterParameter=border}"/>
+            <Button Content="{Binding NavBonRetourFournisseur}" Command="{Binding GoBonRetourFournisseurCommand}" HorizontalAlignment="Stretch" IsVisible="{Binding ShowNavBonRetourFournisseur}"
+                    Background="{Binding IsNavBonRetourFournisseurActive, Converter={x:Static conv:NavTabHighlightConverter.Instance}, ConverterParameter=bg}"
+                    Foreground="{Binding IsNavBonRetourFournisseurActive, Converter={x:Static conv:NavTabHighlightConverter.Instance}, ConverterParameter=fg}"
+                    BorderBrush="{Binding IsNavBonRetourFournisseurActive, Converter={x:Static conv:NavTabHighlightConverter.Instance}, ConverterParameter=border}"/>
             <Button Content="{Binding NavCharges}" Command="{Binding GoChargesCommand}" HorizontalAlignment="Stretch" IsVisible="{Binding ShowNavCharges}"
                     Background="{Binding IsNavChargesActive, Converter={x:Static conv:NavTabHighlightConverter.Instance}, ConverterParameter=bg}"
                     Foreground="{Binding IsNavChargesActive, Converter={x:Static conv:NavTabHighlightConverter.Instance}, ConverterParameter=fg}"

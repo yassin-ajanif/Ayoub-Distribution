@@ -2,9 +2,9 @@ using CommunityToolkit.Mvvm.ComponentModel;
 using GestionCommerciale.Modules.Stock.Models;
 using GestionCommerciale.Shared.Helpers;
 
-namespace GestionCommerciale.Modules.AvoirFournisseur.ViewModels;
+namespace GestionCommerciale.Modules.BonRetourFournisseur.ViewModels;
 
-public partial class AvoirFournisseurLineRow : ObservableObject
+public partial class BonRetourFournisseurLineRow : ObservableObject
 {
     [ObservableProperty] private int _produitId;
     [ObservableProperty] private string _reference = string.Empty;

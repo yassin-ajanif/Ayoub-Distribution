@@ -273,7 +273,7 @@ public enum ReportProfitChargeKind
     SaleMargin,
     BonRetourClient,
     Purchase,
-    AvoirFournisseur,
+    BonRetourFournisseur,
     Charge
 }
 

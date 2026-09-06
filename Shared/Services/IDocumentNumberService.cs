@@ -12,5 +12,5 @@ public interface IDocumentNumberService
     Task<string> NextBonAchatAsync(CancellationToken cancellationToken = default);
     Task<string> NextFactureFournisseurAsync(CancellationToken cancellationToken = default);
     Task<string> NextBonRetourAsync(CancellationToken cancellationToken = default);
-    Task<string> NextAvoirFournisseurAsync(CancellationToken cancellationToken = default);
+    Task<string> NextBonRetourFournisseurAsync(CancellationToken cancellationToken = default);
 }

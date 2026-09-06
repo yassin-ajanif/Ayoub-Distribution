@@ -3,7 +3,7 @@ using System.ComponentModel;
 using Avalonia.Controls;
 using CommunityToolkit.Mvvm.ComponentModel;
 using CommunityToolkit.Mvvm.Input;
-using GestionCommerciale.Modules.AvoirFournisseur.Models;
+using GestionCommerciale.Modules.BonRetourFournisseur.Models;
 using GestionCommerciale.Modules.Auth.Services;
 using GestionCommerciale.Modules.Stock;
 using GestionCommerciale.Modules.Stock.Models;
@@ -17,9 +17,9 @@ using GestionCommerciale.Shared.ViewModels;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.DependencyInjection;
 
-namespace GestionCommerciale.Modules.AvoirFournisseur.ViewModels;
+namespace GestionCommerciale.Modules.BonRetourFournisseur.ViewModels;
 
-public partial class AvoirFournisseurEditViewModel : BaseViewModel
+public partial class BonRetourFournisseurEditViewModel : BaseViewModel
 {
     private readonly IDbContextFactory<AppDbContext> _dbFactory;
     private readonly IDocumentNumberService _numbers;
@@ -34,7 +34,7 @@ public partial class AvoirFournisseurEditViewModel : BaseViewModel
     private readonly IAppSettingsService _settings;
     private readonly IStockMovementService _stock;
 
-    public AvoirFournisseurEditViewModel(
+    public BonRetourFournisseurEditViewModel(
         IDbContextFactory<AppDbContext> dbFactory,
         IDocumentNumberService numbers,
         IDialogService dialog,
@@ -66,17 +66,17 @@ public partial class AvoirFournisseurEditViewModel : BaseViewModel
             UpdateTotalLines();
         };
         LineGridColumns.PropertyChanged += OnLineGridColumnsPropertyChanged;
-        _uiPreferences.LoadDocumentLineColumns("avoirFournisseur", LineGridColumns);
-        Title = _locale.T("Avf_Title");
+        _uiPreferences.LoadDocumentLineColumns("bonRetourFournisseur", LineGridColumns);
+        Title = _locale.T("Brf_Title");
         RefreshUi();
         _ = LoadFournisseursAsync(CancellationToken.None);
     }
 
     public ObservableCollection<GestionCommerciale.Modules.Tiers.Models.Tiers> Fournisseurs { get; } = [];
     public ObservableCollection<Produit> Produits { get; } = [];
-    public ObservableCollection<AvoirFournisseurLineRow> Lignes { get; } = [];
+    public ObservableCollection<BonRetourFournisseurLineRow> Lignes { get; } = [];
 
-    [ObservableProperty] private int? _avoirFournisseurId;
+    [ObservableProperty] private int? _bonRetourFournisseurId;
     [ObservableProperty] private int _fournisseurId;
     [ObservableProperty] private GestionCommerciale.Modules.Tiers.Models.Tiers? _selectedFournisseur;
     [ObservableProperty] private string _numero = string.Empty;
@@ -87,7 +87,7 @@ public partial class AvoirFournisseurEditViewModel : BaseViewModel
     [ObservableProperty] private decimal _totalTva;
     [ObservableProperty] private decimal _totalTtc;
     [ObservableProperty] private bool _canEditDraft = true;
-    [ObservableProperty] private AvoirFournisseurLineRow? _selectedLine;
+    [ObservableProperty] private BonRetourFournisseurLineRow? _selectedLine;
     [ObservableProperty] private string _addLineSearchText = string.Empty;
     [ObservableProperty] private object? _addLineCatalogPick;
 
@@ -138,7 +138,7 @@ public partial class AvoirFournisseurEditViewModel : BaseViewModel
             OnPropertyChanged(nameof(HighlightHtTotal));
             RefreshTotals();
         }
-        _uiPreferences.SaveDocumentLineColumns("avoirFournisseur", LineGridColumns);
+        _uiPreferences.SaveDocumentLineColumns("bonRetourFournisseur", LineGridColumns);
     }
 
     private void RefreshUi()
@@ -147,9 +147,9 @@ public partial class AvoirFournisseurEditViewModel : BaseViewModel
         BtnSave = _locale.T("Btn_Save");
         BtnPdf = _locale.T("Btn_Pdf");
         BtnPrint = _locale.T("Btn_Print");
-        LblFournisseur = _locale.T("Avf_LblFournisseur");
+        LblFournisseur = _locale.T("Brf_LblFournisseur");
         WmFournisseurSearch = _locale.T("Wm_SearchClient");
-        LblDate = _locale.T("Avf_LblDate");
+        LblDate = _locale.T("Brf_LblDate");
         BtnRemoveLine = _locale.T("Btn_RemoveLine");
         LblCatalogHint = _locale.T("Lbl_CatalogHintBonRetour");
         LblTotals = _locale.T("Lbl_Totals");
@@ -186,14 +186,14 @@ public partial class AvoirFournisseurEditViewModel : BaseViewModel
     private void RefreshTotals()
     {
         var includeTva = ShowTotalTtc;
-        var lines = Lignes.Select(l => new AvoirFournisseurLigne
+        var lines = Lignes.Select(l => new BonRetourFournisseurLigne
         {
             Quantite = l.Quantite,
             PrixUnitaireHT = l.PrixUnitaireHt,
             Remise = l.Remise,
             TauxTVA = includeTva ? l.TauxTva : 0
         });
-        var (ht, tva, ttc) = DocumentTotalsHelper.AvoirFournisseurTotals(lines);
+        var (ht, tva, ttc) = DocumentTotalsHelper.BonRetourFournisseurTotals(lines);
         TotalHt = ht;
         TotalTva = tva;
         TotalTtc = ttc;
@@ -226,7 +226,7 @@ public partial class AvoirFournisseurEditViewModel : BaseViewModel
         }
         else
         {
-            var row = new AvoirFournisseurLineRow();
+            var row = new BonRetourFournisseurLineRow();
             row.ApplyCatalogProduct(p);
             row.Quantite = 1;
             row.PropertyChanged += LineChanged;
@@ -245,12 +245,12 @@ public partial class AvoirFournisseurEditViewModel : BaseViewModel
 
     private void LineChanged(object? sender, PropertyChangedEventArgs e)
     {
-        if (e.PropertyName is nameof(AvoirFournisseurLineRow.MontantHt) or nameof(AvoirFournisseurLineRow.MontantTtc))
+        if (e.PropertyName is nameof(BonRetourFournisseurLineRow.MontantHt) or nameof(BonRetourFournisseurLineRow.MontantTtc))
             RefreshTotals();
     }
 
     [RelayCommand]
-    private void RemoveLine(AvoirFournisseurLineRow? line)
+    private void RemoveLine(BonRetourFournisseurLineRow? line)
     {
         if (line is null) return;
         line.PropertyChanged -= LineChanged;
@@ -295,10 +295,10 @@ public partial class AvoirFournisseurEditViewModel : BaseViewModel
 
     private async Task LoadNewAsync(CancellationToken cancellationToken)
     {
-        AvoirFournisseurId = null;
+        BonRetourFournisseurId = null;
         FournisseurId = Fournisseurs.FirstOrDefault()?.Id ?? 0;
         Lignes.Clear();
-        Numero = _locale.T("Avf_DraftPlaceholder");
+        Numero = _locale.T("Brf_DraftPlaceholder");
         Date = new DateTimeOffset(DateTime.Today);
         Motif = string.Empty;
         RetourMarchandise = false;
@@ -306,15 +306,15 @@ public partial class AvoirFournisseurEditViewModel : BaseViewModel
         await LoadDeviseAsync(cancellationToken);
         await LoadProduitsAsync(cancellationToken);
         RefreshTotals();
-        Title = _locale.T("Avf_NewTitle");
+        Title = _locale.T("Brf_NewTitle");
     }
 
     private async Task LoadExistingAsync(int id, CancellationToken cancellationToken)
     {
         await using var db = await _dbFactory.CreateDbContextAsync(cancellationToken);
-        var doc = await db.Set<Models.AvoirFournisseur>().Include(x => x.Lignes)
+        var doc = await db.Set<Models.BonRetourFournisseur>().Include(x => x.Lignes)
             .FirstAsync(x => x.Id == id, cancellationToken);
-        AvoirFournisseurId = doc.Id;
+        BonRetourFournisseurId = doc.Id;
         FournisseurId = doc.FournisseurId;
         Numero = doc.Numero;
         Date = new DateTimeOffset(doc.Date);
@@ -324,7 +324,7 @@ public partial class AvoirFournisseurEditViewModel : BaseViewModel
         foreach (var l in doc.Lignes)
         {
             var prod = Produits.FirstOrDefault(p => p.Id == l.ProduitId);
-            var row = new AvoirFournisseurLineRow
+            var row = new BonRetourFournisseurLineRow
             {
                 ProduitId = l.ProduitId,
                 Reference = prod?.Reference ?? l.Designation,
@@ -343,14 +343,14 @@ public partial class AvoirFournisseurEditViewModel : BaseViewModel
         await LoadDeviseAsync(cancellationToken);
         await LoadProduitsAsync(cancellationToken);
         RefreshTotals();
-        Title = _locale.Tf("Avf_TitleNum", Numero);
+        Title = _locale.Tf("Brf_TitleNum", Numero);
     }
 
     [RelayCommand]
     private void AddLine()
     {
         var p = Produits.FirstOrDefault();
-        var row = new AvoirFournisseurLineRow();
+        var row = new BonRetourFournisseurLineRow();
         if (p != null)
             row.ApplyCatalogProduct(p);
         row.PropertyChanged += LineChanged;
@@ -363,13 +363,13 @@ public partial class AvoirFournisseurEditViewModel : BaseViewModel
     {
         if (!Lignes.Any())
         {
-            await _dialog.ShowErrorAsync(_locale.T("Avf_Title"), _locale.T("Avf_ErrLines"), cancellationToken);
+            await _dialog.ShowErrorAsync(_locale.T("Brf_Title"), _locale.T("Brf_ErrLines"), cancellationToken);
             return;
         }
 
         if (DocumentTotalsHelper.IsEffectivelyZeroTotal(TotalTtc))
         {
-            await _dialog.ShowErrorAsync(_locale.T("Avf_Title"), _locale.T("Doc_ErrZeroTtc"), cancellationToken);
+            await _dialog.ShowErrorAsync(_locale.T("Brf_Title"), _locale.T("Doc_ErrZeroTtc"), cancellationToken);
             return;
         }
 
@@ -377,11 +377,11 @@ public partial class AvoirFournisseurEditViewModel : BaseViewModel
         try
         {
             await using var db = await _dbFactory.CreateDbContextAsync(cancellationToken);
-            Models.AvoirFournisseur entity;
-            if (AvoirFournisseurId == null)
+            Models.BonRetourFournisseur entity;
+            if (BonRetourFournisseurId == null)
             {
-                var num = await _numbers.NextAvoirFournisseurAsync(cancellationToken);
-                entity = new Models.AvoirFournisseur
+                var num = await _numbers.NextBonRetourFournisseurAsync(cancellationToken);
+                entity = new Models.BonRetourFournisseur
                 {
                     Numero = num,
                     FournisseurId = FournisseurId,
@@ -392,7 +392,7 @@ public partial class AvoirFournisseurEditViewModel : BaseViewModel
                 };
                 foreach (var l in Lignes)
                 {
-                    entity.Lignes.Add(new Models.AvoirFournisseurLigne
+                    entity.Lignes.Add(new Models.BonRetourFournisseurLigne
                     {
                         ProduitId = l.ProduitId,
                         Designation = l.Designation,
@@ -404,24 +404,24 @@ public partial class AvoirFournisseurEditViewModel : BaseViewModel
                     });
                 }
 
-                db.AvoirsFournisseurs.Add(entity);
+                db.BonsRetourFournisseurs.Add(entity);
                 await db.SaveChangesAsync(cancellationToken);
-                AvoirFournisseurId = entity.Id;
+                BonRetourFournisseurId = entity.Id;
                 Numero = entity.Numero;
-                Title = _locale.Tf("Avf_TitleNum", Numero);
+                Title = _locale.Tf("Brf_TitleNum", Numero);
             }
             else
             {
-                entity = await db.AvoirsFournisseurs.Include(x => x.Lignes)
-                    .FirstAsync(x => x.Id == AvoirFournisseurId, cancellationToken);
+                entity = await db.BonsRetourFournisseurs.Include(x => x.Lignes)
+                    .FirstAsync(x => x.Id == BonRetourFournisseurId, cancellationToken);
                 entity.FournisseurId = FournisseurId;
                 entity.Date = Date.DateTime;
                 entity.Motif = Motif;
                 entity.RetourMarchandise = RetourMarchandise;
-                db.AvoirFournisseurLignes.RemoveRange(entity.Lignes);
+                db.BonRetourFournisseurLignes.RemoveRange(entity.Lignes);
                 foreach (var l in Lignes)
                 {
-                    entity.Lignes.Add(new Models.AvoirFournisseurLigne
+                    entity.Lignes.Add(new Models.BonRetourFournisseurLigne
                     {
                         ProduitId = l.ProduitId,
                         Designation = l.Designation,
@@ -434,7 +434,7 @@ public partial class AvoirFournisseurEditViewModel : BaseViewModel
                 }
             }
 
-            await _stock.SyncAvoirFournisseurStockAsync(
+            await _stock.SyncBonRetourFournisseurStockAsync(
                 db,
                 entity.Id,
                 entity.Numero,
@@ -443,7 +443,7 @@ public partial class AvoirFournisseurEditViewModel : BaseViewModel
                 _session.UserId,
                 cancellationToken);
             await db.SaveChangesAsync(cancellationToken);
-            await _dialog.ShowInfoAsync(_locale.T("Avf_Title"), _locale.T("Avf_Saved"), cancellationToken);
+            await _dialog.ShowInfoAsync(_locale.T("Brf_Title"), _locale.T("Brf_Saved"), cancellationToken);
         }
         finally
         {
@@ -454,11 +454,11 @@ public partial class AvoirFournisseurEditViewModel : BaseViewModel
     [RelayCommand]
     private async Task ExportPdfAsync(CancellationToken cancellationToken)
     {
-        if (AvoirFournisseurId is not { }) return;
+        if (BonRetourFournisseurId is not { }) return;
         try
         {
             IsBusy = true;
-            var bytes = await BuildAvoirFournisseurPdfBytesAsync(cancellationToken);
+            var bytes = await BuildBonRetourFournisseurPdfBytesAsync(cancellationToken);
             if (bytes == null) return;
             var ok = await _dialog.SavePickedFileBytesAsync(_locale.T("Export_PdfPicker"), $"{Numero}.pdf", new[] { "*.pdf" }, bytes, cancellationToken);
             if (ok)
@@ -477,11 +477,11 @@ public partial class AvoirFournisseurEditViewModel : BaseViewModel
     [RelayCommand]
     private async Task PrintAsync(CancellationToken cancellationToken)
     {
-        if (AvoirFournisseurId is not { }) return;
+        if (BonRetourFournisseurId is not { }) return;
         try
         {
             IsBusy = true;
-            var bytes = await BuildAvoirFournisseurPdfBytesAsync(cancellationToken);
+            var bytes = await BuildBonRetourFournisseurPdfBytesAsync(cancellationToken);
             if (bytes == null) return;
             await _pdfPrint.PrintPdfAsync(bytes, Numero, cancellationToken);
         }
@@ -495,19 +495,19 @@ public partial class AvoirFournisseurEditViewModel : BaseViewModel
         }
     }
 
-    private async Task<byte[]?> BuildAvoirFournisseurPdfBytesAsync(CancellationToken cancellationToken)
+    private async Task<byte[]?> BuildBonRetourFournisseurPdfBytesAsync(CancellationToken cancellationToken)
     {
-        if (AvoirFournisseurId is not { } id) return null;
+        if (BonRetourFournisseurId is not { } id) return null;
         await using var db = await _dbFactory.CreateDbContextAsync(cancellationToken);
-        var a = await db.AvoirsFournisseurs.Include(x => x.Lignes).FirstAsync(x => x.Id == id, cancellationToken);
+        var a = await db.BonsRetourFournisseurs.Include(x => x.Lignes).FirstAsync(x => x.Id == id, cancellationToken);
         var fournisseur = await db.Tiers.AsNoTracking().FirstAsync(t => t.Id == a.FournisseurId, cancellationToken);
-        return await _pdf.BuildAvoirFournisseurPdfAsync(a, DocumentPartyPdfInfo.FromTiers(fournisseur), cancellationToken);
+        return await _pdf.BuildBonRetourFournisseurPdfAsync(a, DocumentPartyPdfInfo.FromTiers(fournisseur), cancellationToken);
     }
 
     [RelayCommand]
     private void Back()
     {
-        var vm = _sp.GetRequiredService<AvoirFournisseurListViewModel>();
+        var vm = _sp.GetRequiredService<BonRetourFournisseurListViewModel>();
         _workspace.Open(vm);
     }
 }

@@ -1,4 +1,4 @@
-using GestionCommerciale.Modules.AvoirFournisseur.Models;
+using GestionCommerciale.Modules.BonRetourFournisseur.Models;
 using GestionCommerciale.Modules.CommandeClient.Models;
 using GestionCommerciale.Modules.CommandeFournisseur.Models;
 using GestionCommerciale.Modules.Devis.Models;
@@ -177,7 +177,7 @@ public static class DocumentTotalsHelper
         return (ht, tva, ht + tva);
     }
 
-    public static (decimal ht, decimal tva, decimal ttc) AvoirFournisseurTotals(IEnumerable<AvoirFournisseurLigne> lignes)
+    public static (decimal ht, decimal tva, decimal ttc) BonRetourFournisseurTotals(IEnumerable<BonRetourFournisseurLigne> lignes)
     {
         decimal ht = 0, tva = 0;
         foreach (var l in lignes)

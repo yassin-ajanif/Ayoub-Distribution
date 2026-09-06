@@ -12,7 +12,7 @@ public sealed class StockMovementService : IStockMovementService
     public const string OrigineTypeBonAchat = "BA";
     public const string OrigineTypeBonReception = "BR";
     public const string OrigineTypeBonRetour = "BRT";
-    public const string OrigineTypeAvoirFournisseur = "AvoirFournisseur";
+    public const string OrigineTypeBonRetourFournisseur = "BRF";
     public const string OrigineTypeImport = "Import";
 
     private readonly ILocaleService _locale;
@@ -206,9 +206,9 @@ public sealed class StockMovementService : IStockMovementService
             cancellationToken);
     }
 
-    public Task SyncAvoirFournisseurStockAsync(
+    public Task SyncBonRetourFournisseurStockAsync(
         AppDbContext db,
-        int avoirFournisseurId,
+        int bonRetourFournisseurId,
         string noteDetail,
         bool retourMarchandise,
         IEnumerable<(int ProduitId, decimal Quantite)> lines,
@@ -224,8 +224,8 @@ public sealed class StockMovementService : IStockMovementService
 
         return SyncDocumentStockAsync(
             db,
-            OrigineTypeAvoirFournisseur,
-            avoirFournisseurId,
+            OrigineTypeBonRetourFournisseur,
+            bonRetourFournisseurId,
             noteDetail,
             desired,
             createdByUserId,
