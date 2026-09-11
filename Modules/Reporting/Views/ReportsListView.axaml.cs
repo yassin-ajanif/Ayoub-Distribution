@@ -58,4 +58,15 @@ public partial class ReportsListView : UserControl
 
         vm.OpenProfitDocumentCommand.Execute(row);
     }
+
+    private void OnCustomerDocNumeroTapped(object? sender, TappedEventArgs e)
+    {
+        if (DataContext is not ReportsListViewModel vm)
+            return;
+        if (sender is not TextBlock { DataContext: ReportSaleByCustomerDocRow row })
+            return;
+
+        e.Handled = true;
+        vm.OpenCustomerDocumentCommand.Execute(row);
+    }
 }

@@ -10,9 +10,6 @@ public interface IReportService
     Task<List<ReportSaleByCustomerRow>> GetSalesByCustomerAsync(
         DateTime from, DateTime to, CancellationToken ct = default);
 
-    Task<List<ReportRefundRow>> GetRefundsAsync(
-        DateTime from, DateTime to, CancellationToken ct = default);
-
     Task<List<ReportDailySaleRow>> GetDailySalesAsync(
         DateTime from, DateTime to, CancellationToken ct = default);
 

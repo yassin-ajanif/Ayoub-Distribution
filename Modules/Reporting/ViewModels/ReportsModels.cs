@@ -40,119 +40,155 @@ public sealed class ReportSaleByProductRow
     public string LblMargin { get; }
 }
 
-public sealed class ReportSaleByCustomerProductRow
+public sealed class ReportSaleByCustomerDocLineRow
 {
-    public ReportSaleByCustomerProductRow(string reference, string designation,
-        decimal quantite, decimal totalHt, decimal totalTtc, string devise,
-        decimal profit, decimal marginPct)
+    public ReportSaleByCustomerDocLineRow(
+        string designation,
+        decimal quantite,
+        decimal totalTtc,
+        decimal promoTtc,
+        decimal earned,
+        string devise,
+        bool isBonSortie,
+        bool isPromo)
     {
-        Reference = reference;
         Designation = designation;
-        Quantite = quantite;
-        TotalHt = totalHt;
-        TotalTtc = totalTtc;
-        Profit = profit;
-        MarginPct = marginPct;
-        Devise = devise;
+        IsPromo = isPromo;
+        IsReturn = !isBonSortie;
+        IsSale = isBonSortie && !isPromo;
         LblQty = quantite.ToString("N2");
-        LblHt = $"{totalHt:N2} {devise}";
-        LblTtc = $"{totalTtc:N2} {devise}";
-        LblProfit = $"{profit:N2} {devise}";
-        LblMargin = $"{marginPct:N1}%";
+        LblTtc = $"{(isBonSortie ? "" : "-")}{totalTtc:N2} {devise}";
+        LblPromo = isPromo ? $"-{promoTtc:N2} {devise}" : "—";
+        var earnedSign = earned > 0 ? "+" : "";
+        LblEarned = $"{earnedSign}{earned:N2} {devise}";
+        IsEarnedPositive = earned >= 0;
     }
 
-    public string Reference { get; }
     public string Designation { get; }
-    public decimal Quantite { get; }
-    public decimal TotalHt { get; }
-    public decimal TotalTtc { get; }
-    public decimal Profit { get; }
-    public decimal MarginPct { get; }
-    public string Devise { get; }
+    public bool IsPromo { get; }
+    public bool IsReturn { get; }
+    public bool IsSale { get; }
     public string LblQty { get; }
-    public string LblHt { get; }
     public string LblTtc { get; }
-    public string LblProfit { get; }
-    public string LblMargin { get; }
+    public string LblPromo { get; }
+    public string LblEarned { get; }
+    public bool IsEarnedPositive { get; }
+}
+
+public sealed partial class ReportSaleByCustomerDocRow : ObservableObject
+{
+    public ReportSaleByCustomerDocRow(
+        bool isBonSortie,
+        int documentId,
+        string typeLabel,
+        string numero,
+        DateTime date,
+        decimal totalTtc,
+        decimal promoTtc,
+        decimal earned,
+        string devise,
+        List<ReportSaleByCustomerDocLineRow>? lines = null)
+    {
+        IsBonSortie = isBonSortie;
+        DocumentId = documentId;
+        TypeLabel = typeLabel;
+        Numero = numero;
+        Date = date;
+        TotalTtc = totalTtc;
+        PromoTtc = promoTtc;
+        Earned = earned;
+        LblDate = date.ToString("d");
+        LblTtc = $"{(isBonSortie ? "" : "-")}{totalTtc:N2} {devise}";
+        LblPromo = promoTtc > 0 ? $"-{promoTtc:N2} {devise}" : "—";
+        var earnedSign = earned > 0 ? "+" : "";
+        LblEarned = $"{earnedSign}{earned:N2} {devise}";
+        IsEarnedPositive = earned >= 0;
+        if (lines != null)
+        {
+            foreach (var line in lines)
+                _lines.Add(line);
+        }
+    }
+
+    public bool IsBonSortie { get; }
+    public bool IsReturn => !IsBonSortie;
+    public int DocumentId { get; }
+    public string TypeLabel { get; }
+    public string Numero { get; }
+    public DateTime Date { get; }
+    public decimal TotalTtc { get; }
+    public decimal PromoTtc { get; }
+    public bool HasPromo => PromoTtc > 0;
+    public decimal Earned { get; }
+    public string LblDate { get; }
+    public string LblTtc { get; }
+    public string LblPromo { get; }
+    public string LblEarned { get; }
+    public bool IsEarnedPositive { get; }
+
+    [ObservableProperty]
+    private bool _isExpanded;
+
+    private readonly ObservableCollection<ReportSaleByCustomerDocLineRow> _lines = [];
+    public ObservableCollection<ReportSaleByCustomerDocLineRow> Lines => _lines;
 }
 
 public sealed partial class ReportSaleByCustomerRow : ObservableObject
 {
-    public ReportSaleByCustomerRow(string client, string ice, string ville,
-        int nbFactures, decimal totalHt, decimal totalTtc, string devise,
-        decimal profit, decimal marginPct,
-        List<ReportSaleByCustomerProductRow>? products = null)
+    public ReportSaleByCustomerRow(string client, string ice,
+        int nbBonsSortie, int nbBonsRetour,
+        decimal totalTtc, decimal totalPromo, decimal totalReturns, decimal earned, string devise,
+        List<ReportSaleByCustomerDocRow>? documents = null)
     {
         Client = client;
         Ice = ice;
-        Ville = ville;
-        NbFactures = nbFactures;
-        TotalHt = totalHt;
+        NbBonsSortie = nbBonsSortie;
+        NbBonsRetour = nbBonsRetour;
         TotalTtc = totalTtc;
-        Profit = profit;
-        MarginPct = marginPct;
+        TotalPromo = totalPromo;
+        TotalReturns = totalReturns;
+        Profit = earned;
         Devise = devise;
-        LblCount = $"{nbFactures} BS";
-        LblHt = $"{totalHt:N2} {devise}";
+        var parts = new List<string>();
+        if (nbBonsSortie > 0)
+            parts.Add($"{nbBonsSortie} BS");
+        if (nbBonsRetour > 0)
+            parts.Add($"{nbBonsRetour} BR");
+        LblCount = parts.Count == 0 ? "—" : string.Join(" · ", parts);
         LblTtc = $"{totalTtc:N2} {devise}";
-        LblProfit = $"{profit:N2} {devise}";
-        LblMargin = $"{marginPct:N1}%";
-        if (products != null)
+        LblPromo = $"-{totalPromo:N2} {devise}";
+        LblReturns = $"-{totalReturns:N2} {devise}";
+        var earnedSign = earned > 0 ? "+" : "";
+        LblProfit = $"{earnedSign}{earned:N2} {devise}";
+        IsEarnedPositive = earned >= 0;
+        if (documents != null)
         {
-            foreach (var p in products)
-                _products.Add(p);
+            foreach (var doc in documents)
+                _documents.Add(doc);
         }
     }
 
     public string Client { get; }
     public string Ice { get; }
-    public string Ville { get; }
-    public int NbFactures { get; }
-    public decimal TotalHt { get; }
+    public int NbBonsSortie { get; }
+    public int NbBonsRetour { get; }
     public decimal TotalTtc { get; }
+    public decimal TotalPromo { get; }
+    public decimal TotalReturns { get; }
     public decimal Profit { get; }
-    public decimal MarginPct { get; }
     public string Devise { get; }
     public string LblCount { get; }
-    public string LblHt { get; }
     public string LblTtc { get; }
+    public string LblPromo { get; }
+    public string LblReturns { get; }
     public string LblProfit { get; }
-    public string LblMargin { get; }
+    public bool IsEarnedPositive { get; }
 
     [ObservableProperty]
     private bool _isExpanded;
 
-    private readonly ObservableCollection<ReportSaleByCustomerProductRow> _products = [];
-    public ObservableCollection<ReportSaleByCustomerProductRow> Products => _products;
-}
-
-public sealed class ReportRefundRow
-{
-    public ReportRefundRow(string numero, DateTime date, string client,
-        string motif, bool retourMarchandise, decimal totalTtc, string devise)
-    {
-        Numero = numero;
-        Date = date;
-        Client = client;
-        Motif = motif;
-        RetourMarchandise = retourMarchandise;
-        TotalTtc = totalTtc;
-        Devise = devise;
-        LblDate = date.ToString("d");
-        LblTotal = $"{totalTtc:N2} {devise}";
-        LblRetour = retourMarchandise ? "\u2713" : "";
-    }
-
-    public string Numero { get; }
-    public DateTime Date { get; }
-    public string Client { get; }
-    public string Motif { get; }
-    public bool RetourMarchandise { get; }
-    public decimal TotalTtc { get; }
-    public string Devise { get; }
-    public string LblDate { get; }
-    public string LblTotal { get; }
-    public string LblRetour { get; }
+    private readonly ObservableCollection<ReportSaleByCustomerDocRow> _documents = [];
+    public ObservableCollection<ReportSaleByCustomerDocRow> Documents => _documents;
 }
 
 public sealed class ReportDailySaleDetailRow
