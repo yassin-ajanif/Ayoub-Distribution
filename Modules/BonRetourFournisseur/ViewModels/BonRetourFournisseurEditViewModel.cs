@@ -4,6 +4,7 @@ using Avalonia.Controls;
 using CommunityToolkit.Mvvm.ComponentModel;
 using CommunityToolkit.Mvvm.Input;
 using GestionCommerciale.Modules.BonRetourFournisseur.Models;
+using GestionCommerciale.Modules.Facturation.ViewModels;
 using GestionCommerciale.Modules.Auth.Services;
 using GestionCommerciale.Modules.Stock;
 using GestionCommerciale.Modules.Stock.Models;
@@ -77,12 +78,14 @@ public partial class BonRetourFournisseurEditViewModel : BaseViewModel
     public ObservableCollection<BonRetourFournisseurLineRow> Lignes { get; } = [];
 
     [ObservableProperty] private int? _bonRetourFournisseurId;
+    [ObservableProperty] private int? _sourceBonRetourId;
+    [ObservableProperty] private string _linkedBrtNumero = string.Empty;
     [ObservableProperty] private int _fournisseurId;
     [ObservableProperty] private GestionCommerciale.Modules.Tiers.Models.Tiers? _selectedFournisseur;
     [ObservableProperty] private string _numero = string.Empty;
     [ObservableProperty] private DateTimeOffset _date = new(DateTime.Today);
     [ObservableProperty] private string _motif = string.Empty;
-    [ObservableProperty] private bool _retourMarchandise;
+    [ObservableProperty] private bool _retourMarchandise = true;
     [ObservableProperty] private decimal _totalHt;
     [ObservableProperty] private decimal _totalTva;
     [ObservableProperty] private decimal _totalTtc;
@@ -123,6 +126,10 @@ public partial class BonRetourFournisseurEditViewModel : BaseViewModel
     public bool ShowTotalTva => LineGridColumns.ShowTva && LineGridColumns.ShowMontantTtc;
     public bool ShowTotalTtc => LineGridColumns.ShowMontantTtc && LineGridColumns.ShowTva;
     public bool HighlightHtTotal => !ShowTotalTtc;
+    public bool HasLinkedBrt => SourceBonRetourId is > 0 && !string.IsNullOrWhiteSpace(LinkedBrtNumero);
+
+    partial void OnSourceBonRetourIdChanged(int? value) => OnPropertyChanged(nameof(HasLinkedBrt));
+    partial void OnLinkedBrtNumeroChanged(string value) => OnPropertyChanged(nameof(HasLinkedBrt));
 
     public AutoCompleteFilterPredicate<object?> ProduitAutocompleteFilter => ProductAutoComplete.ItemFilter;
     public AutoCompleteFilterPredicate<object?> PartyAutocompleteFilter => PartyAutoComplete.ItemFilter;
@@ -296,12 +303,14 @@ public partial class BonRetourFournisseurEditViewModel : BaseViewModel
     private async Task LoadNewAsync(CancellationToken cancellationToken)
     {
         BonRetourFournisseurId = null;
+        SourceBonRetourId = null;
+        LinkedBrtNumero = string.Empty;
         FournisseurId = Fournisseurs.FirstOrDefault()?.Id ?? 0;
         Lignes.Clear();
         Numero = _locale.T("Brf_DraftPlaceholder");
         Date = new DateTimeOffset(DateTime.Today);
         Motif = string.Empty;
-        RetourMarchandise = false;
+        RetourMarchandise = true;
         CanEditDraft = true;
         await LoadDeviseAsync(cancellationToken);
         await LoadProduitsAsync(cancellationToken);
@@ -315,10 +324,14 @@ public partial class BonRetourFournisseurEditViewModel : BaseViewModel
         var doc = await db.Set<Models.BonRetourFournisseur>().Include(x => x.Lignes)
             .FirstAsync(x => x.Id == id, cancellationToken);
         BonRetourFournisseurId = doc.Id;
+        SourceBonRetourId = doc.BonRetourId;
+        LinkedBrtNumero = doc.BonRetourId is int brtId
+            ? await db.BonsRetour.AsNoTracking().Where(b => b.Id == brtId).Select(b => b.Numero).FirstOrDefaultAsync(cancellationToken) ?? string.Empty
+            : string.Empty;
         FournisseurId = doc.FournisseurId;
         Numero = doc.Numero;
         Date = new DateTimeOffset(doc.Date);
-        Motif = doc.Motif;
+        Motif = IsAutoDepuisMotif(doc.Motif, LinkedBrtNumero) ? string.Empty : doc.Motif;
         RetourMarchandise = doc.RetourMarchandise;
         Lignes.Clear();
         foreach (var l in doc.Lignes)
@@ -344,6 +357,56 @@ public partial class BonRetourFournisseurEditViewModel : BaseViewModel
         await LoadProduitsAsync(cancellationToken);
         RefreshTotals();
         Title = _locale.Tf("Brf_TitleNum", Numero);
+    }
+
+    public async Task LoadFromBonRetourAsync(int bonRetourId, CancellationToken cancellationToken = default)
+    {
+        foreach (var l in Lignes) l.PropertyChanged -= LineChanged;
+        BonRetourFournisseurId = null;
+        SourceBonRetourId = bonRetourId;
+        FournisseurId = Fournisseurs.FirstOrDefault()?.Id ?? 0;
+        Lignes.Clear();
+        Numero = _locale.T("Brf_DraftPlaceholder");
+        Date = new DateTimeOffset(DateTime.Today);
+        Motif = string.Empty;
+        RetourMarchandise = true;
+        CanEditDraft = true;
+
+        await LoadDeviseAsync(cancellationToken);
+        await LoadProduitsAsync(cancellationToken);
+        await LoadFournisseursAsync(cancellationToken);
+
+        await using var db = await _dbFactory.CreateDbContextAsync(cancellationToken);
+        var brt = await db.BonsRetour.AsNoTracking()
+            .Include(x => x.Lignes)
+            .FirstAsync(x => x.Id == bonRetourId, cancellationToken);
+        LinkedBrtNumero = brt.Numero;
+
+        foreach (var l in brt.Lignes)
+        {
+            var prod = Produits.FirstOrDefault(p => p.Id == l.ProduitId);
+            var row = new BonRetourFournisseurLineRow();
+            if (prod != null)
+            {
+                row.ApplyCatalogProduct(prod);
+            }
+            else
+            {
+                row.ProduitId = l.ProduitId;
+                row.Designation = l.Designation;
+                row.Conditionnement = l.Conditionnement;
+                row.PrixUnitaireHt = l.PrixUnitaireHT;
+                row.TauxTva = l.TauxTVA;
+            }
+
+            row.Quantite = l.Quantite;
+            row.Remise = l.Remise;
+            row.PropertyChanged += LineChanged;
+            Lignes.Add(row);
+        }
+
+        RefreshTotals();
+        Title = _locale.T("Brf_FromBrt");
     }
 
     [RelayCommand]
@@ -384,6 +447,7 @@ public partial class BonRetourFournisseurEditViewModel : BaseViewModel
                 entity = new Models.BonRetourFournisseur
                 {
                     Numero = num,
+                    BonRetourId = SourceBonRetourId,
                     FournisseurId = FournisseurId,
                     Date = Date.DateTime,
                     Motif = Motif,
@@ -415,6 +479,7 @@ public partial class BonRetourFournisseurEditViewModel : BaseViewModel
                 entity = await db.BonsRetourFournisseurs.Include(x => x.Lignes)
                     .FirstAsync(x => x.Id == BonRetourFournisseurId, cancellationToken);
                 entity.FournisseurId = FournisseurId;
+                entity.BonRetourId = SourceBonRetourId;
                 entity.Date = Date.DateTime;
                 entity.Motif = Motif;
                 entity.RetourMarchandise = RetourMarchandise;
@@ -502,6 +567,23 @@ public partial class BonRetourFournisseurEditViewModel : BaseViewModel
         var a = await db.BonsRetourFournisseurs.Include(x => x.Lignes).FirstAsync(x => x.Id == id, cancellationToken);
         var fournisseur = await db.Tiers.AsNoTracking().FirstAsync(t => t.Id == a.FournisseurId, cancellationToken);
         return await _pdf.BuildBonRetourFournisseurPdfAsync(a, DocumentPartyPdfInfo.FromTiers(fournisseur), cancellationToken);
+    }
+
+    [RelayCommand]
+    private void OpenLinkedBrt()
+    {
+        if (SourceBonRetourId is not int id) return;
+        var vm = _sp.GetRequiredService<BonRetourEditViewModel>();
+        vm.LoadExisting(id);
+        _workspace.Open(vm);
+    }
+
+    private static bool IsAutoDepuisMotif(string motif, string brtNumero)
+    {
+        if (string.IsNullOrWhiteSpace(motif) || string.IsNullOrWhiteSpace(brtNumero)) return false;
+        var trimmed = motif.Trim();
+        return trimmed.Equals($"Depuis {brtNumero}", StringComparison.OrdinalIgnoreCase)
+            || trimmed.Equals($"من {brtNumero}", StringComparison.OrdinalIgnoreCase);
     }
 
     [RelayCommand]

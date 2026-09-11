@@ -155,6 +155,9 @@ namespace GestionCommerciale.Shared.Database.Migrations
                         .ValueGeneratedOnAdd()
                         .HasColumnType("INTEGER");
 
+                    b.Property<int?>("BonRetourId")
+                        .HasColumnType("INTEGER");
+
                     b.Property<DateTime>("CreatedAt")
                         .HasColumnType("TEXT");
 
@@ -182,6 +185,8 @@ namespace GestionCommerciale.Shared.Database.Migrations
                         .HasColumnType("TEXT");
 
                     b.HasKey("Id");
+
+                    b.HasIndex("BonRetourId");
 
                     b.ToTable("BonsRetourFournisseurs");
                 });
@@ -1560,6 +1565,16 @@ namespace GestionCommerciale.Shared.Database.Migrations
                         .IsRequired();
 
                     b.Navigation("BonRetourFournisseur");
+                });
+
+            modelBuilder.Entity("GestionCommerciale.Modules.BonRetourFournisseur.Models.BonRetourFournisseur", b =>
+                {
+                    b.HasOne("GestionCommerciale.Modules.Facturation.Models.BonRetour", "BonRetour")
+                        .WithMany()
+                        .HasForeignKey("BonRetourId")
+                        .OnDelete(DeleteBehavior.Restrict);
+
+                    b.Navigation("BonRetour");
                 });
 
             modelBuilder.Entity("GestionCommerciale.Modules.Charges.Models.Charge", b =>

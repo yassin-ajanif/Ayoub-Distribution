@@ -191,6 +191,8 @@ public class AppDbContext : DbContext
 
         modelBuilder.Entity<BonRetourFournisseur>(e =>
         {
+            e.HasOne(a => a.BonRetour).WithMany().HasForeignKey(a => a.BonRetourId).IsRequired(false).OnDelete(DeleteBehavior.Restrict);
+            e.HasIndex(a => a.BonRetourId);
             e.HasMany(a => a.Lignes).WithOne(l => l.BonRetourFournisseur).HasForeignKey(l => l.BonRetourFournisseurId).OnDelete(DeleteBehavior.Cascade);
         });
 

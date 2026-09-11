@@ -15,7 +15,14 @@
         <Button Content="{Binding BtnPrint}" Command="{Binding PrintCommand}"/>
       </StackPanel>
       <Border Background="{DynamicResource CourseraSurfaceBrush}" CornerRadius="8,8,0,0" Padding="10,8">
-        <TextBlock Text="{Binding Numero}" FontWeight="Bold"/>
+        <StackPanel Orientation="Horizontal" Spacing="12">
+          <TextBlock Text="{Binding Numero}" FontWeight="Bold" VerticalAlignment="Center"/>
+          <Button Classes="docLink" Command="{Binding OpenLinkedBrtCommand}" IsVisible="{Binding HasLinkedBrt}">
+            <Border Padding="6,1" Background="#DBEAFE" BorderBrush="#93C5FD" BorderThickness="1" CornerRadius="4">
+              <TextBlock Text="{Binding LinkedBrtNumero}" FontSize="11" FontWeight="SemiBold" Foreground="#1E40AF"/>
+            </Border>
+          </Button>
+        </StackPanel>
       </Border>
       <Grid ColumnDefinitions="*,Auto" VerticalAlignment="Top">
         <StackPanel Grid.Column="0" Spacing="4" HorizontalAlignment="Left">

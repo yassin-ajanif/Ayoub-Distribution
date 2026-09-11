@@ -182,20 +182,23 @@ public partial class ProduitsViewModel : BaseViewModel
 
     partial void OnFichePrixAchatTtcChanged(decimal value)
     {
-        if (!_syncingTtc && FicheTauxTva > 0)
+        // When TVA is 0%, TTC == HT; still sync so TTC-only edits are not lost on save.
+        var factor = 1 + FicheTauxTva / 100m;
+        if (!_syncingTtc && factor != 0)
         {
             _syncingTtc = true;
-            FichePrixAchatHt = value / (1 + FicheTauxTva / 100m);
+            FichePrixAchatHt = value / factor;
             _syncingTtc = false;
         }
     }
 
     partial void OnFichePrixVenteTtcChanged(decimal value)
     {
-        if (!_syncingTtc && FicheTauxTva > 0)
+        var factor = 1 + FicheTauxTva / 100m;
+        if (!_syncingTtc && factor != 0)
         {
             _syncingTtc = true;
-            FichePrixVenteHt = value / (1 + FicheTauxTva / 100m);
+            FichePrixVenteHt = value / factor;
             _syncingTtc = false;
         }
     }

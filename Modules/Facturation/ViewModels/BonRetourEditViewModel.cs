@@ -3,6 +3,7 @@ using System.ComponentModel;
 using Avalonia.Controls;
 using CommunityToolkit.Mvvm.ComponentModel;
 using CommunityToolkit.Mvvm.Input;
+using GestionCommerciale.Modules.BonRetourFournisseur.ViewModels;
 using GestionCommerciale.Modules.Auth.Services;
 using GestionCommerciale.Modules.Stock;
 using GestionCommerciale.Modules.Stock.Models;
@@ -120,14 +121,19 @@ public partial class BonRetourEditViewModel : BaseViewModel
     public ObservableCollection<BonRetourLineRow> Lignes { get; } = [];
 
     [ObservableProperty] private int? _bonRetourId;
-    partial void OnBonRetourIdChanged(int? value) => RemoveBonRetourCommand.NotifyCanExecuteChanged();
+    partial void OnBonRetourIdChanged(int? value)
+    {
+        RemoveBonRetourCommand.NotifyCanExecuteChanged();
+        OnPropertyChanged(nameof(CanToBrf));
+        ToBrfCommand.NotifyCanExecuteChanged();
+    }
     [ObservableProperty] private int? _factureId;
     [ObservableProperty] private int _clientId;
     [ObservableProperty] private GestionCommerciale.Modules.Tiers.Models.Tiers? _selectedClient;
     [ObservableProperty] private string _numero = string.Empty;
     [ObservableProperty] private DateTimeOffset _date = new(DateTime.Today);
     [ObservableProperty] private string _motif = string.Empty;
-    [ObservableProperty] private bool _retourMarchandise;
+    [ObservableProperty] private bool _retourMarchandise = true;
     [ObservableProperty] private decimal _totalHt;
     [ObservableProperty] private decimal _totalTva;
     [ObservableProperty] private decimal _totalTtc;
@@ -140,6 +146,9 @@ public partial class BonRetourEditViewModel : BaseViewModel
     [ObservableProperty] private string _btnSave = string.Empty;
     [ObservableProperty] private string _btnPdf = string.Empty;
     [ObservableProperty] private string _btnPrint = string.Empty;
+    [ObservableProperty] private string _btnToBrf = string.Empty;
+    [ObservableProperty] private int? _linkedBrfId;
+    [ObservableProperty] private string _linkedBrfNumero = string.Empty;
     [ObservableProperty] private string _menuDeleteBonRetour = string.Empty;
     [ObservableProperty] private string _lblClient = string.Empty;
     [ObservableProperty] private string _wmClientSearch = string.Empty;
@@ -169,6 +178,11 @@ public partial class BonRetourEditViewModel : BaseViewModel
     public bool ShowTotalTva => LineGridColumns.ShowTva && LineGridColumns.ShowMontantTtc;
     public bool ShowTotalTtc => LineGridColumns.ShowMontantTtc && LineGridColumns.ShowTva;
     public bool HighlightHtTotal => !ShowTotalTtc;
+    public bool CanToBrf => BonRetourId != null;
+    public bool HasLinkedBrf => LinkedBrfId is > 0 && !string.IsNullOrWhiteSpace(LinkedBrfNumero);
+
+    partial void OnLinkedBrfIdChanged(int? value) => OnPropertyChanged(nameof(HasLinkedBrf));
+    partial void OnLinkedBrfNumeroChanged(string value) => OnPropertyChanged(nameof(HasLinkedBrf));
 
     public AutoCompleteFilterPredicate<object?> ProduitAutocompleteFilter => ProductAutoComplete.ItemFilter;
     public AutoCompleteFilterPredicate<object?> PartyAutocompleteFilter => PartyAutoComplete.ItemFilter;
@@ -193,6 +207,7 @@ public partial class BonRetourEditViewModel : BaseViewModel
         BtnSave = _locale.T("Btn_Save");
         BtnPdf = _locale.T("Btn_Pdf");
         BtnPrint = _locale.T("Btn_Print");
+        BtnToBrf = _locale.T("Btn_ToBrf");
         MenuDeleteBonRetour = _locale.T("Brt_MenuDelete");
         LblClient = _locale.T("Lbl_Client");
         WmClientSearch = _locale.T("Wm_SearchClient");
@@ -357,7 +372,9 @@ public partial class BonRetourEditViewModel : BaseViewModel
         Numero = _locale.T("Brt_DraftPlaceholder");
         Date = new DateTimeOffset(DateTime.Today);
         Motif = string.Empty;
-        RetourMarchandise = false;
+        RetourMarchandise = true;
+        LinkedBrfId = null;
+        LinkedBrfNumero = string.Empty;
         CanEditDraft = true;
         await LoadDeviseAsync(cancellationToken);
         await LoadProduitsAsync(cancellationToken);
@@ -399,6 +416,9 @@ public partial class BonRetourEditViewModel : BaseViewModel
             Lignes.Add(row);
         }
 
+        RetourMarchandise = true;
+        LinkedBrfId = null;
+        LinkedBrfNumero = string.Empty;
         CanEditDraft = true;
         await LoadDeviseAsync(cancellationToken);
         await LoadProduitsAsync(cancellationToken);
@@ -450,6 +470,25 @@ public partial class BonRetourEditViewModel : BaseViewModel
         await LoadProduitsAsync(cancellationToken);
         RefreshTotals();
         Title = _locale.Tf("Brt_TitleNum", Numero);
+        await RefreshLinkedBrfAsync(cancellationToken);
+    }
+
+    private async Task RefreshLinkedBrfAsync(CancellationToken cancellationToken)
+    {
+        if (BonRetourId is not int id)
+        {
+            LinkedBrfId = null;
+            LinkedBrfNumero = string.Empty;
+            return;
+        }
+
+        await using var db = await _dbFactory.CreateDbContextAsync(cancellationToken);
+        var linked = await db.BonsRetourFournisseurs.AsNoTracking()
+            .Where(b => b.BonRetourId == id)
+            .Select(b => new { b.Id, b.Numero })
+            .FirstOrDefaultAsync(cancellationToken);
+        LinkedBrfId = linked?.Id;
+        LinkedBrfNumero = linked?.Numero ?? string.Empty;
     }
 
     [RelayCommand]
@@ -614,6 +653,45 @@ public partial class BonRetourEditViewModel : BaseViewModel
         return await _pdf.BuildBonRetourPdfAsync(a, DocumentPartyPdfInfo.FromTiers(client), cancellationToken);
     }
 
+    [RelayCommand(CanExecute = nameof(CanToBrf))]
+    private async Task ToBrfAsync(CancellationToken cancellationToken)
+    {
+        if (BonRetourId is not { } id) return;
+
+        try
+        {
+            await using var db = await _dbFactory.CreateDbContextAsync(cancellationToken);
+            var existingBrf = await db.BonsRetourFournisseurs.AsNoTracking()
+                .Where(b => b.BonRetourId == id)
+                .Select(b => new { b.Id, b.Numero })
+                .FirstOrDefaultAsync(cancellationToken);
+            if (existingBrf != null)
+            {
+                LinkedBrfId = existingBrf.Id;
+                LinkedBrfNumero = existingBrf.Numero;
+                OpenLinkedBrf();
+                return;
+            }
+
+            var vm = _sp.GetRequiredService<BonRetourFournisseurEditViewModel>();
+            await vm.LoadFromBonRetourAsync(id, cancellationToken);
+            _workspace.Open(vm);
+        }
+        catch (Exception ex)
+        {
+            await _dialog.ShowErrorAsync(_locale.T("Brt_Title"), ex.Message, cancellationToken);
+        }
+    }
+
+    [RelayCommand]
+    private void OpenLinkedBrf()
+    {
+        if (LinkedBrfId is not int id) return;
+        var vm = _sp.GetRequiredService<BonRetourFournisseurEditViewModel>();
+        vm.Load(id);
+        _workspace.Open(vm);
+    }
+
     [RelayCommand]
     private void Back()
     {
@@ -635,6 +713,16 @@ public partial class BonRetourEditViewModel : BaseViewModel
         try
         {
             await using var db = await _dbFactory.CreateDbContextAsync(cancellationToken);
+            var linkedBrf = await db.BonsRetourFournisseurs.AsNoTracking()
+                .Where(b => b.BonRetourId == id)
+                .Select(b => b.Numero)
+                .FirstOrDefaultAsync(cancellationToken);
+            if (linkedBrf != null)
+            {
+                await _dialog.ShowErrorAsync(_locale.T("Brt_Title"), _locale.Tf("Brt_ErrDeleteReferencedBrf", linkedBrf), cancellationToken);
+                return;
+            }
+
             var tracked = await db.BonsRetour.Include(a => a.Lignes).FirstAsync(a => a.Id == id, cancellationToken);
             await _stock.SyncBonRetourStockAsync(db, id, tracked.Numero, false, [], null, cancellationToken);
             db.BonsRetour.Remove(tracked);

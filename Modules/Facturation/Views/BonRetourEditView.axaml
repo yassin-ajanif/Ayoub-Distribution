@@ -11,6 +11,7 @@
       <StackPanel Orientation="Horizontal" Spacing="8">
         <Button Content="{Binding BtnBack}" Command="{Binding BackCommand}"/>
         <Button Content="{Binding BtnSave}" Command="{Binding SaveCommand}" IsEnabled="{Binding CanEditDraft}"/>
+        <Button Content="{Binding BtnToBrf}" Command="{Binding ToBrfCommand}" IsEnabled="{Binding CanToBrf}"/>
         <Button Content="{Binding BtnPdf}" Command="{Binding ExportPdfCommand}"/>
         <Button Content="{Binding BtnPrint}" Command="{Binding PrintCommand}"/>
       </StackPanel>
@@ -20,7 +21,14 @@
             <MenuItem Header="{Binding MenuDeleteBonRetour}" Command="{Binding RemoveBonRetourCommand}"/>
           </ContextMenu>
         </Border.ContextMenu>
-        <TextBlock Text="{Binding Numero}" FontWeight="Bold"/>
+        <StackPanel Orientation="Horizontal" Spacing="12">
+          <TextBlock Text="{Binding Numero}" FontWeight="Bold" VerticalAlignment="Center"/>
+          <Button Classes="docLink" Command="{Binding OpenLinkedBrfCommand}" IsVisible="{Binding HasLinkedBrf}">
+            <Border Padding="6,1" Background="#DCFCE7" BorderBrush="#86EFAC" BorderThickness="1" CornerRadius="4">
+              <TextBlock Text="{Binding LinkedBrfNumero}" FontSize="11" FontWeight="SemiBold" Foreground="#166534"/>
+            </Border>
+          </Button>
+        </StackPanel>
       </Border>
       <Grid ColumnDefinitions="*,Auto" VerticalAlignment="Top">
         <StackPanel Grid.Column="0" Spacing="4" HorizontalAlignment="Left">

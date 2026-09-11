@@ -238,6 +238,16 @@ public partial class BonRetourListViewModel : BaseViewModel
         try
         {
             await using var db = await _dbFactory.CreateDbContextAsync(cancellationToken);
+            var linkedBrf = await db.BonsRetourFournisseurs.AsNoTracking()
+                .Where(b => b.BonRetourId == item.Id)
+                .Select(b => b.Numero)
+                .FirstOrDefaultAsync(cancellationToken);
+            if (linkedBrf != null)
+            {
+                await _dialog.ShowErrorAsync(_locale.T("Brt_Title"), _locale.Tf("Brt_ErrDeleteReferencedBrf", linkedBrf), cancellationToken);
+                return;
+            }
+
             var entity = await db.BonsRetour.Include(a => a.Lignes).FirstAsync(a => a.Id == item.Id, cancellationToken);
             await _stock.SyncBonRetourStockAsync(db, item.Id, entity.Numero, false, [], null, cancellationToken);
             db.BonsRetour.Remove(entity);
