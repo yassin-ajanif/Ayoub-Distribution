@@ -4,7 +4,6 @@ namespace GestionCommerciale.Modules.FactureFournisseur.Services;
 
 public enum SupplierBulkPayableDocumentKind
 {
-    FactureFournisseur = 0,
     BonAchat = 1
 }
 

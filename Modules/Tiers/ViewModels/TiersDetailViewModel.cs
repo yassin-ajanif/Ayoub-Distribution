@@ -5,7 +5,6 @@ using CommunityToolkit.Mvvm.Input;
 using GestionCommerciale.Modules.Facturation.Models;
 using GestionCommerciale.Modules.Facturation.Services;
 using GestionCommerciale.Modules.FactureFournisseur.Services;
-using GestionCommerciale.Modules.Reception.Services;
 using GestionCommerciale.Modules.Tiers.Models;
 using GestionCommerciale.Shared.Database;
 using GestionCommerciale.Shared.Helpers;
@@ -508,9 +507,7 @@ public partial class TiersDetailViewModel : BaseViewModel
         foreach (var line in preview.Lines)
         {
             sb.AppendLine();
-            var designation = line.Kind == BulkPayableDocumentKind.Facture
-                ? _locale.Tf("ClientLedger_FactureFmt", line.Numero)
-                : _locale.Tf("ClientLedger_BonSortieFmt", line.Numero);
+            var designation = _locale.Tf("ClientLedger_BonSortieFmt", line.Numero);
             sb.AppendLine(designation);
             sb.AppendLine(_locale.Tf("ClientLedger_BulkPayPreviewApplied", FormatAmount(line.Amount)));
             if (line.WillBeFullyPaid)
@@ -532,9 +529,7 @@ public partial class TiersDetailViewModel : BaseViewModel
         foreach (var line in preview.Lines)
         {
             sb.AppendLine();
-            var designation = line.Kind == SupplierBulkPayableDocumentKind.FactureFournisseur
-                ? _locale.Tf("SupplierLedger_FactureFmt", line.Numero)
-                : _locale.Tf("SupplierLedger_BonAchatFmt", line.Numero);
+            var designation = _locale.Tf("SupplierLedger_BonAchatFmt", line.Numero);
             sb.AppendLine(designation);
             sb.AppendLine(_locale.Tf("SupplierLedger_BulkPayPreviewApplied", FormatAmount(line.Amount)));
             if (line.WillBeFullyPaid)

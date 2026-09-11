@@ -1,6 +1,6 @@
 using GestionCommerciale.Modules.Facturation.Services;
 
-namespace GestionCommerciale.Modules.Reception.Services;
+namespace GestionCommerciale.Modules.FactureFournisseur.Services;
 
 public interface ISupplierAccountStatementService
 {

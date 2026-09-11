@@ -6,16 +6,9 @@ public static class DocumentNumberKind
 
     public static readonly Entry[] All =
     [
-        new("DEV", "Nav_Devis"),
-        new("BCC", "Nav_BCC"),
-        new("BL", "Nav_BL"),
         new("BS", "Nav_BonSortie"),
         new("BA", "Nav_BonAchat"),
-        new("FAC", "Nav_Factures"),
         new("BRT", "Nav_BonRetour"),
-        new("BC", "Nav_BC"),
-        new("BR", "Nav_BR"),
-        new("FAF", "Nav_FacturesFournisseur"),
         new("BRF", "Nav_BonRetourFournisseur"),
     ];
 }

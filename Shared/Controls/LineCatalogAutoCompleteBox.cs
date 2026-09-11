@@ -2,10 +2,7 @@ using Avalonia;
 using Avalonia.Controls;
 using Avalonia.Controls.Primitives;
 using Avalonia.Controls.Utils;
-using GestionCommerciale.Modules.CommandeFournisseur.ViewModels;
-using GestionCommerciale.Modules.Devis.ViewModels;
 using GestionCommerciale.Modules.Facturation.ViewModels;
-using GestionCommerciale.Modules.Livraison.ViewModels;
 using GestionCommerciale.Modules.Stock.Models;
 
 namespace GestionCommerciale.Shared.Controls;
@@ -93,17 +90,7 @@ public static class LineCatalogAutoComplete
         if (sender is not LineCatalogAutoCompleteBox acb) return;
         switch (acb.DataContext)
         {
-            case DevisLineRow d:
-                d.ApplyCatalogProduct(p);
-                break;
-            case FactureLineRow f:
-                f.ApplyCatalogProduct(p);
-                break;
-            case BCLineRow b:
-                b.ApplyCatalogProduct(p);
-                break;
-            case BLLineRow bl:
-                bl.ApplyCatalogProduct(p);
+            default:
                 break;
         }
     }

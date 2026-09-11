@@ -5,8 +5,8 @@ namespace GestionCommerciale.Modules.Facturation.Models;
 public class BonRetour : BaseEntity
 {
     public string Numero { get; set; } = string.Empty;
+    /// <summary>Legacy column kept in SQLite. No longer linked to a client invoice.</summary>
     public int? FactureId { get; set; }
-    public Facture? Facture { get; set; }
     public int ClientId { get; set; }
     public DateTime Date { get; set; }
     public string Motif { get; set; } = string.Empty;

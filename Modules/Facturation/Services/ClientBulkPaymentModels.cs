@@ -4,7 +4,6 @@ namespace GestionCommerciale.Modules.Facturation.Services;
 
 public enum BulkPayableDocumentKind
 {
-    Facture = 0,
     BonSortie = 1
 }
 

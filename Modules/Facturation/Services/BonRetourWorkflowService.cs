@@ -26,26 +26,8 @@ public sealed class BonRetourWorkflowService : IBonRetourWorkflowService
             .Include(a => a.Lignes)
             .FirstAsync(a => a.Id == bonRetourId, cancellationToken);
 
-        if (avoir.FactureId.HasValue)
-        {
-            var facture = await db.Factures
-                .Include(f => f.Paiements)
-                .FirstAsync(f => f.Id == avoir.FactureId.Value, cancellationToken);
-
-            var ttcFacture = facture.TotalTtc;
-            var (_, _, ttcBonRetour) = DocumentTotalsHelper.BonRetourTotals(avoir.Lignes);
-
-            var existingBonsRetour = await db.BonsRetour
-                .Where(a => a.FactureId == facture.Id && a.Id != avoir.Id)
-                .Include(a => a.Lignes)
-                .ToListAsync(cancellationToken);
-            decimal deja = 0;
-            foreach (var a in existingBonsRetour)
-                deja += DocumentTotalsHelper.BonRetourTotals(a.Lignes).ttc;
-
-            if (deja + ttcBonRetour > ttcFacture + 0.01m)
-                throw new InvalidOperationException("Montant du bon de retour supérieur au reste disponible sur la facture.");
-        }
+        if (avoir.Lignes.Count == 0)
+            throw new InvalidOperationException("Le bon de retour ne contient aucune ligne.");
 
         await _stock.SyncBonRetourStockAsync(
             db,

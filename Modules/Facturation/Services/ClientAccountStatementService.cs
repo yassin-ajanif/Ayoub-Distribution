@@ -21,25 +21,6 @@ public sealed class ClientAccountStatementService : IClientAccountStatementServi
     {
         await using var db = await _dbFactory.CreateDbContextAsync(cancellationToken);
 
-        var factures = await db.Factures.AsNoTracking()
-            .Where(f => f.ClientId == clientId)
-            .Select(f => new
-            {
-                f.Id,
-                f.Numero,
-                f.Date,
-                f.TotalTtc,
-                Paiements = f.Paiements!.Select(p => new
-                {
-                    p.Id,
-                    p.Date,
-                    p.Montant,
-                    p.Mode,
-                    p.Reference
-                }).ToList()
-            })
-            .ToListAsync(cancellationToken);
-
         var avoirs = await db.BonsRetour.AsNoTracking()
             .Where(a => a.ClientId == clientId)
             .Select(a => new
@@ -59,21 +40,6 @@ public sealed class ClientAccountStatementService : IClientAccountStatementServi
             .ToListAsync(cancellationToken);
 
         var entries = new List<(DateTime Date, ClientAccountEntryKind Kind, long TieBreakId, string Designation, string Observation, decimal Debit, decimal Credit)>();
-
-        foreach (var f in factures)
-        {
-            var ttc = f.TotalTtc;
-            if (ttc <= 0) continue;
-
-            entries.Add((
-                f.Date.Date,
-                ClientAccountEntryKind.Facture,
-                f.Id,
-                _locale.Tf("ClientLedger_FactureFmt", f.Numero),
-                string.Empty,
-                ttc,
-                0));
-        }
 
         var bonsSortie = await db.BonsSortie.AsNoTracking()
             .Where(b => b.ClientId == clientId)
@@ -130,23 +96,6 @@ public sealed class ClientAccountStatementService : IClientAccountStatementServi
                 observation,
                 0,
                 ttc));
-        }
-
-        foreach (var f in factures)
-        {
-            foreach (var p in f.Paiements)
-            {
-                if (p.Montant <= 0 || p.Mode == ModePaiement.Credit) continue;
-                var observation = string.IsNullOrWhiteSpace(p.Reference) ? string.Empty : p.Reference.Trim();
-                entries.Add((
-                    p.Date.Date,
-                    ClientAccountEntryKind.Paiement,
-                    p.Id,
-                    PaymentDesignation(p.Mode),
-                    observation,
-                    0,
-                    p.Montant));
-            }
         }
 
         foreach (var b in bonsSortie)

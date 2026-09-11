@@ -4,10 +4,8 @@ using CommunityToolkit.Mvvm.Input;
 using GestionCommerciale.Modules.Auth.Services;
 using GestionCommerciale.Modules.BonRetourFournisseur.ViewModels;
 using GestionCommerciale.Modules.Facturation.ViewModels;
-using GestionCommerciale.Modules.Livraison.ViewModels;
 using GestionCommerciale.Modules.Sortie.ViewModels;
 using GestionCommerciale.Modules.Achat.ViewModels;
-using GestionCommerciale.Modules.Reception.ViewModels;
 using GestionCommerciale.Modules.Stock;
 using GestionCommerciale.Modules.Stock.Models;
 using GestionCommerciale.Modules.Stock.Services;
@@ -229,12 +227,7 @@ public partial class StockMainViewModel : BaseViewModel
             .Distinct()
             .ToList();
 
-        var blParties = blIds.Count == 0
-            ? []
-            : await db.BonsLivraison.AsNoTracking()
-                .Where(b => blIds.Contains(b.Id))
-                .Select(b => new { b.Id, b.ClientId })
-                .ToListAsync(cancellationToken);
+        var blParties = Array.Empty<(int Id, int ClientId)>();
 
         var bpParties = bpIds.Count == 0
             ? []
@@ -250,12 +243,7 @@ public partial class StockMainViewModel : BaseViewModel
                 .Select(b => new { b.Id, b.FournisseurId })
                 .ToListAsync(cancellationToken);
 
-        var brParties = brIds.Count == 0
-            ? []
-            : await db.BonsReception.AsNoTracking()
-                .Where(b => brIds.Contains(b.Id))
-                .Select(b => new { b.Id, b.FournisseurId })
-                .ToListAsync(cancellationToken);
+        var brParties = Array.Empty<(int Id, int FournisseurId)>();
 
         var avoirParties = bonRetourIds.Count == 0
             ? []
@@ -293,14 +281,7 @@ public partial class StockMainViewModel : BaseViewModel
         var avoirMap = avoirParties.ToDictionary(x => x.Id, x => tierNames.GetValueOrDefault(x.ClientId, string.Empty));
         var bonRetourFournisseurMap = bonRetourFournisseurParties.ToDictionary(x => x.Id, x => tierNames.GetValueOrDefault(x.FournisseurId, string.Empty));
 
-        var blPriceMap = blIds.Count == 0
-            ? new Dictionary<(int, int), decimal>()
-            : (await db.BonLivraisonLignes.AsNoTracking()
-                .Where(l => blIds.Contains(l.BLId))
-                .Select(l => new { l.BLId, l.ProduitId, l.PrixUnitaireHT })
-                .ToListAsync(cancellationToken))
-                .GroupBy(l => (l.BLId, l.ProduitId))
-                .ToDictionary(g => g.Key, g => g.Last().PrixUnitaireHT);
+        var blPriceMap = new Dictionary<(int, int), decimal>();
 
         var bpPriceMap = bpIds.Count == 0
             ? new Dictionary<(int, int), decimal>()
@@ -320,14 +301,7 @@ public partial class StockMainViewModel : BaseViewModel
                 .GroupBy(l => (l.BonAchatId, l.ProduitId))
                 .ToDictionary(g => g.Key, g => g.Last().PrixUnitaireHT);
 
-        var brPriceMap = brIds.Count == 0
-            ? new Dictionary<(int, int), decimal>()
-            : (await db.BonReceptionLignes.AsNoTracking()
-                .Where(l => brIds.Contains(l.BRId))
-                .Select(l => new { l.BRId, l.ProduitId, l.PrixUnitaireHT })
-                .ToListAsync(cancellationToken))
-                .GroupBy(l => (l.BRId, l.ProduitId))
-                .ToDictionary(g => g.Key, g => g.Last().PrixUnitaireHT);
+        var brPriceMap = new Dictionary<(int, int), decimal>();
 
         var avoirPriceMap = bonRetourIds.Count == 0
             ? new Dictionary<(int, int), decimal>()
@@ -439,13 +413,6 @@ public partial class StockMainViewModel : BaseViewModel
 
         switch (mouvement.OrigineType)
         {
-            case StockMovementService.OrigineTypeBonLivraison:
-            {
-                var vm = _sp.GetRequiredService<BLEditViewModel>();
-                vm.Load(id);
-                _workspace.Open(vm);
-                break;
-            }
             case StockMovementService.OrigineTypeBonSortie:
             {
                 var vm = _sp.GetRequiredService<BonSortieEditViewModel>();
@@ -456,13 +423,6 @@ public partial class StockMainViewModel : BaseViewModel
             case StockMovementService.OrigineTypeBonAchat:
             {
                 var vm = _sp.GetRequiredService<BonAchatEditViewModel>();
-                vm.Load(id);
-                _workspace.Open(vm);
-                break;
-            }
-            case StockMovementService.OrigineTypeBonReception:
-            {
-                var vm = _sp.GetRequiredService<BREditViewModel>();
                 vm.Load(id);
                 _workspace.Open(vm);
                 break;

@@ -3,16 +3,9 @@ using CommunityToolkit.Mvvm.Input;
 using GestionCommerciale.Modules.BonRetourFournisseur.ViewModels;
 using GestionCommerciale.Modules.Auth.Services;
 using GestionCommerciale.Modules.Charges.ViewModels;
-using GestionCommerciale.Modules.Devis.ViewModels;
 using GestionCommerciale.Modules.Facturation.ViewModels;
-using GestionCommerciale.Modules.FactureFournisseur.ViewModels;
-using GestionCommerciale.Modules.Livraison.ViewModels;
-using GestionCommerciale.Modules.CommandeFournisseur.ViewModels;
-using GestionCommerciale.Modules.CommandeClient.ViewModels;
-using GestionCommerciale.Modules.Pos.ViewModels;
 using GestionCommerciale.Modules.Sortie.ViewModels;
 using GestionCommerciale.Modules.Achat.ViewModels;
-using GestionCommerciale.Modules.Reception.ViewModels;
 using GestionCommerciale.Modules.Reporting.ViewModels;
 using GestionCommerciale.Modules.Stock.ViewModels;
 using GestionCommerciale.Modules.Tiers.Models;
@@ -179,7 +172,7 @@ public partial class AppShellViewModel : BaseViewModel
     private void GoHome() => _workspace.Open(_sp.GetRequiredService<HomeViewModel>());
 
     [RelayCommand]
-    private void GoPos() => _workspace.Open(_sp.GetRequiredService<PosViewModel>());
+    private void GoPos() { }
 
     [RelayCommand]
     private void GoClients()
@@ -212,44 +205,13 @@ public partial class AppShellViewModel : BaseViewModel
     }
 
     [RelayCommand]
-    private void GoDevis() => _workspace.Open(_sp.GetRequiredService<DevisListViewModel>());
-
-    [RelayCommand]
-    private void GoBCV()
-    {
-        var vm = _sp.GetRequiredService<BCVListViewModel>();
-        _workspace.Open(vm);
-        vm.LoadCommand.Execute(null);
-    }
-
-    [RelayCommand]
-    private void GoBL() => _workspace.Open(_sp.GetRequiredService<BLListViewModel>());
-
-    [RelayCommand]
     private void GoBonSortie() => _workspace.Open(_sp.GetRequiredService<BonSortieListViewModel>());
 
     [RelayCommand]
     private void GoBonAchat() => _workspace.Open(_sp.GetRequiredService<BonAchatListViewModel>());
 
     [RelayCommand]
-    private void GoBR() => _workspace.Open(_sp.GetRequiredService<BRListViewModel>());
-
-    [RelayCommand]
-    private void GoBC()
-    {
-        var vm = _sp.GetRequiredService<BCListViewModel>();
-        _workspace.Open(vm);
-        vm.LoadCommand.Execute(null);
-    }
-
-    [RelayCommand]
-    private void GoFactures() => _workspace.Open(_sp.GetRequiredService<FactureListViewModel>());
-
-    [RelayCommand]
     private void GoBonRetour() => _workspace.Open(_sp.GetRequiredService<BonRetourListViewModel>());
-
-    [RelayCommand]
-    private void GoFacturesFournisseur() => _workspace.Open(_sp.GetRequiredService<FactureFournisseurListViewModel>());
 
     [RelayCommand]
     private void GoBonRetourFournisseur() => _workspace.Open(_sp.GetRequiredService<BonRetourFournisseurListViewModel>());
@@ -282,23 +244,23 @@ public partial class AppShellViewModel : BaseViewModel
     {
         var p = _workspace.CurrentPage;
         IsNavHomeActive = p is HomeViewModel;
-        IsNavPosActive = p is PosViewModel;
+        IsNavPosActive = false;
         IsNavClientsActive = p is TiersListViewModel tl && tl.Scope == TiersListScope.Clients
             || p is TiersDetailViewModel td && td.ListScope == TiersListScope.Clients;
         IsNavFournisseursActive = p is TiersListViewModel tiersList && tiersList.Scope == TiersListScope.Fournisseurs
             || p is TiersDetailViewModel tiersDetail && tiersDetail.ListScope == TiersListScope.Fournisseurs;
-        IsNavDevisActive = p is DevisListViewModel or DevisEditViewModel;
-        IsNavBccActive = p is BCVListViewModel or BCVEditViewModel;
-        IsNavBlActive = p is BLListViewModel or BLEditViewModel;
+        IsNavDevisActive = false;
+        IsNavBccActive = false;
+        IsNavBlActive = false;
         IsNavBonSortieActive = p is BonSortieListViewModel or BonSortieEditViewModel;
         IsNavBonAchatActive = p is BonAchatListViewModel or BonAchatEditViewModel;
-        IsNavFacturesActive = p is FactureListViewModel or FactureEditViewModel;
+        IsNavFacturesActive = false;
         IsNavBonRetourActive = p is BonRetourListViewModel or BonRetourEditViewModel;
         IsNavBonRetourFournisseurActive = p is BonRetourFournisseurListViewModel or BonRetourFournisseurEditViewModel;
         IsNavChargesActive = p is ChargeListViewModel or ChargeEditViewModel;
-        IsNavBcActive = p is BCListViewModel or BCEditViewModel;
-        IsNavBrActive = p is BRListViewModel or BREditViewModel;
-        IsNavFacturesFournisseurActive = p is FactureFournisseurListViewModel or FactureFournisseurEditViewModel;
+        IsNavBcActive = false;
+        IsNavBrActive = false;
+        IsNavFacturesFournisseurActive = false;
         IsNavStockActive = p is StockMainViewModel;
         IsNavProduitsActive = p is ProduitsViewModel;
         IsNavReportsActive = p is ReportsListViewModel;

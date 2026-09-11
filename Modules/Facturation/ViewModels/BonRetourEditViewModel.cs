@@ -354,8 +354,6 @@ public partial class BonRetourEditViewModel : BaseViewModel
             _ = LoadExistingAsync(id.Value, CancellationToken.None);
     }
 
-    public void LoadNew(int factureId) => _ = LoadNewAsync(factureId, CancellationToken.None);
-
     private async Task LoadNewAsync(CancellationToken cancellationToken)
     {
         if (!_session.CanAccessBonRetour)
@@ -372,50 +370,6 @@ public partial class BonRetourEditViewModel : BaseViewModel
         Numero = _locale.T("Brt_DraftPlaceholder");
         Date = new DateTimeOffset(DateTime.Today);
         Motif = string.Empty;
-        RetourMarchandise = true;
-        LinkedBrfId = null;
-        LinkedBrfNumero = string.Empty;
-        CanEditDraft = true;
-        await LoadDeviseAsync(cancellationToken);
-        await LoadProduitsAsync(cancellationToken);
-        RefreshTotals();
-        Title = _locale.T("Brt_NewTitle");
-    }
-
-    private async Task LoadNewAsync(int factureId, CancellationToken cancellationToken)
-    {
-        if (!_session.CanAccessBonRetour)
-        {
-            await _dialog.ShowErrorAsync(_locale.T("Brt_Title"), _locale.T("Brt_ErrDenied"), cancellationToken);
-            return;
-        }
-
-        foreach (var l in Lignes) l.PropertyChanged -= LineChanged;
-        BonRetourId = null;
-        FactureId = factureId;
-        Lignes.Clear();
-        await using var db = await _dbFactory.CreateDbContextAsync(cancellationToken);
-        var f = await db.Factures.Include(x => x.Lignes).FirstAsync(x => x.Id == factureId, cancellationToken);
-        ClientId = f.ClientId;
-        Numero = _locale.T("Brt_DraftPlaceholder");
-        foreach (var l in f.Lignes)
-        {
-            var prod = Produits.FirstOrDefault(p => p.Id == l.ProduitId);
-            var row = new BonRetourLineRow
-            {
-                ProduitId = l.ProduitId,
-                Reference = prod?.Reference ?? string.Empty,
-                Designation = l.Designation,
-                Conditionnement = l.Conditionnement,
-                Quantite = Math.Min(l.Quantite, 1),
-                PrixUnitaireHt = l.PrixUnitaireHT,
-                Remise = l.Remise,
-                TauxTva = l.TauxTVA
-            };
-            row.PropertyChanged += LineChanged;
-            Lignes.Add(row);
-        }
-
         RetourMarchandise = true;
         LinkedBrfId = null;
         LinkedBrfNumero = string.Empty;

@@ -185,19 +185,19 @@ public partial class ReportingViewModel : BaseViewModel
         var caCur = await InvoiceTtcSumAsync(db, startCur, endCur, ct);
         var caPrev = await InvoiceTtcSumAsync(db, startPrev, endPrev, ct);
 
-        var devis30 = await db.Devis.AsNoTracking().CountAsync(d => d.Date >= since30, ct);
-        var devisExpire = await db.Devis.AsNoTracking().CountAsync(
-            d => d.DateValidite >= now && d.DateValidite <= expireUntil, ct);
-        var blMonth = await db.BonsLivraison.AsNoTracking().CountAsync(
+        var bs30 = await db.BonsSortie.AsNoTracking().CountAsync(d => d.Date >= since30, ct);
+        var bsDueSoon = await db.BonsSortie.AsNoTracking().CountAsync(
+            d => !d.EstPayee && d.DateEcheance >= now && d.DateEcheance <= expireUntil, ct);
+        var bsMonth = await db.BonsSortie.AsNoTracking().CountAsync(
             b => b.Date >= startCur && b.Date < endCur, ct);
-        var bcMonth = await db.BonsCommande.AsNoTracking().CountAsync(
+        var baMonth = await db.BonsAchat.AsNoTracking().CountAsync(
             b => b.Date >= startCur && b.Date < endCur, ct);
-        var bcTotal = await db.BonsCommande.AsNoTracking().CountAsync(ct);
-        var brMonth = await db.BonsReception.AsNoTracking().CountAsync(
+        var baTotal = await db.BonsAchat.AsNoTracking().CountAsync(ct);
+        var brtMonth = await db.BonsRetour.AsNoTracking().CountAsync(
             b => b.Date >= startCur && b.Date < endCur, ct);
 
         var yearStart = startCur.AddMonths(-11);
-        var topClientAgg = (await db.Factures.AsNoTracking()
+        var topClientAgg = (await db.BonsSortie.AsNoTracking()
             .Where(f => f.Date >= yearStart)
             .Select(f => new {
                 f.ClientId,
@@ -225,14 +225,14 @@ public partial class ReportingViewModel : BaseViewModel
 
         var blSince = startCur.AddMonths(-11);
         var blLignes = await (
-            from l in db.BonLivraisonLignes.AsNoTracking()
-            join b in db.BonsLivraison.AsNoTracking() on l.BLId equals b.Id
+            from l in db.BonSortieLignes.AsNoTracking()
+            join b in db.BonsSortie.AsNoTracking() on l.BonSortieId equals b.Id
             where b.Date >= blSince
-            select new { l.ProduitId, l.QuantiteLivree }
+            select new { l.ProduitId, l.Quantite }
         ).ToListAsync(ct);
         var topProd = blLignes
             .GroupBy(l => l.ProduitId)
-            .Select(g => new { ProduitId = g.Key, Qty = g.Sum(x => x.QuantiteLivree) })
+            .Select(g => new { ProduitId = g.Key, Qty = g.Sum(x => x.Quantite) })
             .OrderByDescending(x => x.Qty)
             .Take(5)
             .ToList();
@@ -270,7 +270,7 @@ public partial class ReportingViewModel : BaseViewModel
             p => p.Actif && p.StockMinimum > 0 && p.StockActuel < p.StockMinimum, ct);
         var pctSous = actifs > 0 ? (double)sousMin / actifs * 100.0 : 0;
 
-        var unpaidProj = await db.Factures.AsNoTracking()
+        var unpaidProj = await db.BonsSortie.AsNoTracking()
             .Where(f => !f.EstPayee)
             .Select(f => new {
                 f.Numero,
@@ -327,11 +327,11 @@ public partial class ReportingViewModel : BaseViewModel
             LineCaCurrent = FormatCaLine(_locale, "Report_FmtCurrentMonth", caCur, dev),
             LineCaPrev = FormatCaLine(_locale, "Report_FmtPrevMonth", caPrev, dev),
             LineCaDelta = FormatCaDelta(caCur, caPrev, dev, _locale),
-            KpiDevis30 = _locale.Tf("Report_KpiDevis30", devis30.ToString(CultureInfo.CurrentCulture)),
-            KpiDevisExpire = _locale.Tf("Report_KpiDevisExpire", devisExpire.ToString(CultureInfo.CurrentCulture)),
-            KpiBlMonth = _locale.Tf("Report_KpiBlMonth", blMonth.ToString(CultureInfo.CurrentCulture)),
-            KpiBc = _locale.Tf("Report_KpiBc", bcMonth.ToString(CultureInfo.CurrentCulture), bcTotal.ToString(CultureInfo.CurrentCulture)),
-            KpiBrMonth = _locale.Tf("Report_KpiBrMonth", brMonth.ToString(CultureInfo.CurrentCulture)),
+            KpiDevis30 = _locale.Tf("Report_KpiDevis30", bs30.ToString(CultureInfo.CurrentCulture)),
+            KpiDevisExpire = _locale.Tf("Report_KpiDevisExpire", bsDueSoon.ToString(CultureInfo.CurrentCulture)),
+            KpiBlMonth = _locale.Tf("Report_KpiBlMonth", bsMonth.ToString(CultureInfo.CurrentCulture)),
+            KpiBc = _locale.Tf("Report_KpiBc", baMonth.ToString(CultureInfo.CurrentCulture), baTotal.ToString(CultureInfo.CurrentCulture)),
+            KpiBrMonth = _locale.Tf("Report_KpiBrMonth", brtMonth.ToString(CultureInfo.CurrentCulture)),
             KpiStock = _locale.Tf("Report_KpiStock", actifs.ToString(CultureInfo.CurrentCulture), sousMin.ToString(CultureInfo.CurrentCulture), pctSous.ToString("F0", CultureInfo.CurrentCulture)),
             KpiEncours = _locale.Tf("Report_KpiEncours", CurrencyHelper.Format(encoursTotal, dev), encoursCount.ToString(CultureInfo.CurrentCulture)),
             TopClients = topClientRows,
@@ -343,7 +343,7 @@ public partial class ReportingViewModel : BaseViewModel
 
     private static async Task<decimal> InvoiceTtcSumAsync(AppDbContext db, DateTime from, DateTime to, CancellationToken ct)
     {
-        return await db.Factures.AsNoTracking()
+        return await db.BonsSortie.AsNoTracking()
             .Where(f => f.Date >= from && f.Date < to)
             .Select(f => (decimal?)f.Lignes.Sum(l => l.Quantite * l.PrixUnitaireHT * (1m - l.Remise / 100m) * (1m + l.TauxTVA / 100m)) * (1m - f.RemiseGlobale / 100m))
             .SumAsync(ct) ?? 0m;

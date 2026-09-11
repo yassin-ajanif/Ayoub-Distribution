@@ -46,54 +46,27 @@ public sealed class ClientBulkPaymentService : IClientBulkPaymentService
 
             foreach (var line in preview.Lines)
             {
-                if (line.Kind == BulkPayableDocumentKind.Facture)
+                var bs = await db.BonsSortie
+                    .Include(b => b.Paiements)
+                    .Include(b => b.Lignes)
+                    .FirstAsync(b => b.Id == line.DocumentId && b.ClientId == request.ClientId, cancellationToken);
+
+                DocumentTotalsHelper.SyncBonSortieTotalTtc(bs);
+                var paidBefore = bs.Paiements.Sum(p => p.Montant);
+                var totalAfter = paidBefore + line.Amount;
+                DocumentTotalsHelper.EnsurePaymentsNotOverTtc(bs.TotalTtc, totalAfter);
+
+                db.PaiementsBonSortie.Add(new PaiementBonSortie
                 {
-                    var facture = await db.Factures
-                        .Include(f => f.Paiements)
-                        .Include(f => f.Lignes)
-                        .FirstAsync(f => f.Id == line.DocumentId && f.ClientId == request.ClientId, cancellationToken);
+                    BonSortieId = bs.Id,
+                    Montant = line.Amount,
+                    Date = date,
+                    Mode = request.Mode,
+                    Reference = reference
+                });
 
-                    DocumentTotalsHelper.SyncFactureTotalTtc(facture);
-                    var paidBefore = facture.Paiements.Sum(p => p.Montant);
-                    var totalAfter = paidBefore + line.Amount;
-                    DocumentTotalsHelper.EnsurePaymentsNotOverTtc(facture.TotalTtc, totalAfter);
-
-                    db.Paiements.Add(new Paiement
-                    {
-                        FactureId = facture.Id,
-                        Montant = line.Amount,
-                        Date = date,
-                        Mode = request.Mode,
-                        Reference = reference
-                    });
-
-                    if (IsFullyPaid(facture.TotalTtc, totalAfter))
-                        facture.EstPayee = true;
-                }
-                else
-                {
-                    var bs = await db.BonsSortie
-                        .Include(b => b.Paiements)
-                        .Include(b => b.Lignes)
-                        .FirstAsync(b => b.Id == line.DocumentId && b.ClientId == request.ClientId, cancellationToken);
-
-                    DocumentTotalsHelper.SyncBonSortieTotalTtc(bs);
-                    var paidBefore = bs.Paiements.Sum(p => p.Montant);
-                    var totalAfter = paidBefore + line.Amount;
-                    DocumentTotalsHelper.EnsurePaymentsNotOverTtc(bs.TotalTtc, totalAfter);
-
-                    db.PaiementsBonSortie.Add(new PaiementBonSortie
-                    {
-                        BonSortieId = bs.Id,
-                        Montant = line.Amount,
-                        Date = date,
-                        Mode = request.Mode,
-                        Reference = reference
-                    });
-
-                    if (IsFullyPaid(bs.TotalTtc, totalAfter))
-                        bs.EstPayee = true;
-                }
+                if (IsFullyPaid(bs.TotalTtc, totalAfter))
+                    bs.EstPayee = true;
             }
 
             await db.SaveChangesAsync(cancellationToken);
@@ -112,43 +85,16 @@ public sealed class ClientBulkPaymentService : IClientBulkPaymentService
         bool track,
         CancellationToken cancellationToken)
     {
-        IQueryable<Facture> facturesQ = db.Factures
-            .Include(f => f.Paiements)
-            .Include(f => f.Lignes)
-            .Where(f => f.ClientId == clientId);
         IQueryable<BonSortie> bssQ = db.BonsSortie
             .Include(b => b.Paiements)
             .Include(b => b.Lignes)
             .Where(b => b.ClientId == clientId);
 
         if (!track)
-        {
-            facturesQ = facturesQ.AsNoTracking();
             bssQ = bssQ.AsNoTracking();
-        }
 
-        var factures = await facturesQ.ToListAsync(cancellationToken);
         var bss = await bssQ.ToListAsync(cancellationToken);
-
         var result = new List<BulkPayableDocument>();
-
-        foreach (var f in factures)
-        {
-            DocumentTotalsHelper.SyncFactureTotalTtc(f);
-            var paid = f.Paiements.Sum(p => p.Montant);
-            var remaining = Math.Round(f.TotalTtc - paid, 2, MidpointRounding.AwayFromZero);
-            if (remaining <= DocumentTotalsHelper.PaiementTtcTolerance)
-                continue;
-
-            result.Add(new BulkPayableDocument(
-                BulkPayableDocumentKind.Facture,
-                f.Id,
-                f.Numero,
-                f.Date.Date,
-                f.TotalTtc,
-                paid,
-                remaining));
-        }
 
         foreach (var b in bss)
         {

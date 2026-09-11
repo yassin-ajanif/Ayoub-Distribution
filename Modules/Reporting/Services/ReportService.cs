@@ -1,7 +1,8 @@
+using GestionCommerciale.Modules.Achat.Models;
 using GestionCommerciale.Modules.BonRetourFournisseur.Models;
 using GestionCommerciale.Modules.Facturation.Models;
-using GestionCommerciale.Modules.FactureFournisseur.Models;
 using GestionCommerciale.Modules.Reporting.ViewModels;
+using GestionCommerciale.Modules.Sortie.Models;
 using GestionCommerciale.Modules.Stock.Models;
 using GestionCommerciale.Shared.Database;
 using GestionCommerciale.Shared.Helpers;
@@ -33,8 +34,8 @@ public sealed class ReportService : IReportService
         await using var db = await _dbFactory.CreateDbContextAsync(ct);
         var toEnd = to.Date.AddDays(1);
 
-        var lignes = await db.FactureLignes.AsNoTracking()
-            .Where(l => l.Facture!.Date >= from && l.Facture.Date < toEnd)
+        var lignes = await db.BonSortieLignes.AsNoTracking()
+            .Where(l => l.BonSortie!.Date >= from && l.BonSortie.Date < toEnd)
             .Select(l => new
             {
                 l.ProduitId,
@@ -247,7 +248,7 @@ public sealed class ReportService : IReportService
         await using var db = await _dbFactory.CreateDbContextAsync(ct);
         var toEnd = to.Date.AddDays(1);
 
-        var factures = await db.Factures.AsNoTracking()
+        var factures = await db.BonsSortie.AsNoTracking()
             .Where(f => f.Date >= from && f.Date < toEnd)
             .OrderBy(f => f.Date)
             .Select(f => new
@@ -343,7 +344,7 @@ public sealed class ReportService : IReportService
         var now = DateTime.Today;
         await using var db = await _dbFactory.CreateDbContextAsync(ct);
 
-        var unpaid = await db.Factures.AsNoTracking()
+        var unpaid = await db.BonsSortie.AsNoTracking()
             .Where(f => !f.EstPayee)
             .OrderBy(f => f.DateEcheance)
             .Take(200)
@@ -363,14 +364,14 @@ public sealed class ReportService : IReportService
         var rows = new List<ReportUnpaidRow>();
         foreach (var f in unpaid)
         {
-            var lignes = f.Lignes.Select(l => new FactureLigne
+            var lignes = f.Lignes.Select(l => new BonSortieLigne
             {
                 Quantite = l.Quantite,
                 PrixUnitaireHT = l.PrixUnitaireHT,
                 Remise = l.Remise,
                 TauxTVA = l.TauxTVA
             }).ToList();
-            var (_, _, ttc) = DocumentTotalsHelper.FactureTotals(lignes, f.RemiseGlobale);
+            var (_, _, ttc) = DocumentTotalsHelper.BonSortieTotals(lignes, f.RemiseGlobale);
             var paye = f.Paiements.Sum();
             var reste = ttc - paye;
             if (reste <= 0.01m) continue;
@@ -470,24 +471,6 @@ public sealed class ReportService : IReportService
         var typeBonRetourClient = _locale.T("Reports_TypeBonRetourClient");
         var typeBonRetourFournisseur = _locale.T("Reports_TypeBonRetourFournisseur");
 
-        var factures = await db.Factures.AsNoTracking()
-            .Where(f => f.Date >= from && f.Date < toEnd)
-            .Select(f => new
-            {
-                f.Numero,
-                f.Date,
-                f.RemiseGlobale,
-                Lignes = f.Lignes!.Select(l => new
-                {
-                    l.ProduitId,
-                    l.Quantite,
-                    l.PrixUnitaireHT,
-                    l.Remise,
-                    l.TauxTVA
-                }).ToList()
-            })
-            .ToListAsync(ct);
-
         var bonsSortie = await db.BonsSortie.AsNoTracking()
             .Where(b => b.Date >= from && b.Date < toEnd)
             .Select(b => new
@@ -523,8 +506,7 @@ public sealed class ReportService : IReportService
             })
             .ToListAsync(ct);
 
-        var allProdIds = factures.SelectMany(f => f.Lignes).Select(l => l.ProduitId)
-            .Concat(bonsSortie.SelectMany(b => b.Lignes).Select(l => l.ProduitId))
+        var allProdIds = bonsSortie.SelectMany(b => b.Lignes).Select(l => l.ProduitId)
             .Concat(avoirsClient.SelectMany(a => a.Lignes).Select(l => l.ProduitId))
             .Distinct()
             .ToList();
@@ -537,33 +519,6 @@ public sealed class ReportService : IReportService
         decimal totalMargin = 0;
         decimal totalVente = 0;
         decimal totalBonsRetourClient = 0;
-
-        foreach (var f in factures)
-        {
-            var factor = 1 - f.RemiseGlobale / 100m;
-            decimal ht = 0, ttc = 0, costHt = 0;
-            foreach (var l in f.Lignes)
-            {
-                var lht = DocumentTotalsHelper.LigneHT(l.Quantite, l.PrixUnitaireHT, l.Remise);
-                ht += lht;
-                ttc += lht * (1 + l.TauxTVA / 100m);
-                costHt += l.Quantite * prodMap.GetValueOrDefault(l.ProduitId);
-            }
-            ht *= factor;
-            ttc *= factor;
-            var profit = ht - costHt;
-            totalMargin += profit;
-            totalVente += ttc;
-            rows.Add(new ReportProfitChargeRow(
-                ReportProfitChargeKind.SaleMargin,
-                typeMarge,
-                f.Numero ?? string.Empty,
-                f.Date,
-                ttc,
-                profit,
-                dev,
-                profit >= 0));
-        }
 
         foreach (var b in bonsSortie)
         {
@@ -614,7 +569,7 @@ public sealed class ReportService : IReportService
                 false));
         }
 
-        var facturesFournisseur = await db.FacturesFournisseurs.AsNoTracking()
+        var facturesFournisseur = await db.BonsAchat.AsNoTracking()
             .Where(f => f.Date >= from && f.Date < toEnd)
             .Select(f => new
             {
@@ -635,14 +590,14 @@ public sealed class ReportService : IReportService
         decimal totalBonsRetourFournisseur = 0;
         foreach (var f in facturesFournisseur)
         {
-            var lignes = f.Lignes.Select(l => new FactureFournisseurLigne
+            var lignes = f.Lignes.Select(l => new BonAchatLigne
             {
                 Quantite = l.Quantite,
                 PrixUnitaireHT = l.PrixUnitaireHT,
                 Remise = l.Remise,
                 TauxTVA = l.TauxTVA
             }).ToList();
-            var (_, _, ttc) = DocumentTotalsHelper.FactureFournisseurTotals(lignes, f.RemiseGlobale);
+            var (_, _, ttc) = DocumentTotalsHelper.BonAchatTotals(lignes, f.RemiseGlobale);
             totalPurchases += ttc;
             rows.Add(new ReportProfitChargeRow(
                 ReportProfitChargeKind.Purchase,

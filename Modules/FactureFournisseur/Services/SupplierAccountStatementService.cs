@@ -6,7 +6,7 @@ using GestionCommerciale.Shared.Helpers;
 using GestionCommerciale.Shared.Services;
 using Microsoft.EntityFrameworkCore;
 
-namespace GestionCommerciale.Modules.Reception.Services;
+namespace GestionCommerciale.Modules.FactureFournisseur.Services;
 
 public sealed class SupplierAccountStatementService : ISupplierAccountStatementService
 {
@@ -22,25 +22,6 @@ public sealed class SupplierAccountStatementService : ISupplierAccountStatementS
     public async Task<ClientAccountStatementResult> GetStatementAsync(int fournisseurId, CancellationToken cancellationToken = default)
     {
         await using var db = await _dbFactory.CreateDbContextAsync(cancellationToken);
-
-        var factures = await db.FacturesFournisseurs.AsNoTracking()
-            .Where(f => f.FournisseurId == fournisseurId)
-            .Select(f => new
-            {
-                f.Id,
-                f.Numero,
-                f.Date,
-                f.TotalTtc,
-                Paiements = f.Paiements!.Select(p => new
-                {
-                    p.Id,
-                    p.Date,
-                    p.Montant,
-                    p.Mode,
-                    p.Reference
-                }).ToList()
-            })
-            .ToListAsync(cancellationToken);
 
         var avoirs = await db.BonsRetourFournisseurs.AsNoTracking()
             .Where(a => a.FournisseurId == fournisseurId)
@@ -61,21 +42,6 @@ public sealed class SupplierAccountStatementService : ISupplierAccountStatementS
             .ToListAsync(cancellationToken);
 
         var entries = new List<(DateTime Date, ClientAccountEntryKind Kind, long TieBreakId, string Designation, string Observation, decimal Debit, decimal Credit)>();
-
-        foreach (var f in factures)
-        {
-            var ttc = f.TotalTtc;
-            if (ttc <= 0) continue;
-
-            entries.Add((
-                f.Date.Date,
-                ClientAccountEntryKind.Facture,
-                f.Id,
-                _locale.Tf("SupplierLedger_FactureFmt", f.Numero),
-                string.Empty,
-                ttc,
-                0));
-        }
 
         var bonsAchat = await db.BonsAchat.AsNoTracking()
             .Where(b => b.FournisseurId == fournisseurId)
@@ -132,23 +98,6 @@ public sealed class SupplierAccountStatementService : ISupplierAccountStatementS
                 observation,
                 0,
                 ttc));
-        }
-
-        foreach (var f in factures)
-        {
-            foreach (var p in f.Paiements)
-            {
-                if (p.Montant <= 0 || p.Mode == ModePaiement.Credit) continue;
-                var observation = string.IsNullOrWhiteSpace(p.Reference) ? string.Empty : p.Reference.Trim();
-                entries.Add((
-                    p.Date.Date,
-                    ClientAccountEntryKind.Paiement,
-                    p.Id,
-                    PaymentDesignation(p.Mode),
-                    observation,
-                    0,
-                    p.Montant));
-            }
         }
 
         foreach (var b in bonsAchat)

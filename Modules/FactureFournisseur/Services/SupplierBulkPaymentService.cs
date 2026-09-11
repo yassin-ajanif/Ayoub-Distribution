@@ -1,7 +1,5 @@
-using FactureFournisseurEntity = GestionCommerciale.Modules.FactureFournisseur.Models.FactureFournisseur;
 using GestionCommerciale.Modules.Achat.Models;
 using GestionCommerciale.Modules.Facturation.Models;
-using GestionCommerciale.Modules.FactureFournisseur.Models;
 using GestionCommerciale.Shared.Database;
 using GestionCommerciale.Shared.Helpers;
 using Microsoft.EntityFrameworkCore;
@@ -48,54 +46,27 @@ public sealed class SupplierBulkPaymentService : ISupplierBulkPaymentService
 
             foreach (var line in preview.Lines)
             {
-                if (line.Kind == SupplierBulkPayableDocumentKind.FactureFournisseur)
+                var ba = await db.BonsAchat
+                    .Include(b => b.Paiements)
+                    .Include(b => b.Lignes)
+                    .FirstAsync(b => b.Id == line.DocumentId && b.FournisseurId == request.FournisseurId, cancellationToken);
+
+                DocumentTotalsHelper.SyncBonAchatTotalTtc(ba);
+                var paidBefore = ba.Paiements.Sum(p => p.Montant);
+                var totalAfter = paidBefore + line.Amount;
+                DocumentTotalsHelper.EnsurePaymentsNotOverTtc(ba.TotalTtc, totalAfter);
+
+                db.PaiementsBonAchat.Add(new PaiementBonAchat
                 {
-                    var facture = await db.FacturesFournisseurs
-                        .Include(f => f.Paiements)
-                        .Include(f => f.Lignes)
-                        .FirstAsync(f => f.Id == line.DocumentId && f.FournisseurId == request.FournisseurId, cancellationToken);
+                    BonAchatId = ba.Id,
+                    Montant = line.Amount,
+                    Date = date,
+                    Mode = request.Mode,
+                    Reference = reference
+                });
 
-                    DocumentTotalsHelper.SyncFactureFournisseurTotalTtc(facture);
-                    var paidBefore = facture.Paiements.Sum(p => p.Montant);
-                    var totalAfter = paidBefore + line.Amount;
-                    DocumentTotalsHelper.EnsurePaymentsNotOverTtc(facture.TotalTtc, totalAfter);
-
-                    db.PaiementsFournisseurs.Add(new PaiementFournisseur
-                    {
-                        FactureFournisseurId = facture.Id,
-                        Montant = line.Amount,
-                        Date = date,
-                        Mode = request.Mode,
-                        Reference = reference
-                    });
-
-                    if (IsFullyPaid(facture.TotalTtc, totalAfter))
-                        facture.EstPayee = true;
-                }
-                else
-                {
-                    var ba = await db.BonsAchat
-                        .Include(b => b.Paiements)
-                        .Include(b => b.Lignes)
-                        .FirstAsync(b => b.Id == line.DocumentId && b.FournisseurId == request.FournisseurId, cancellationToken);
-
-                    DocumentTotalsHelper.SyncBonAchatTotalTtc(ba);
-                    var paidBefore = ba.Paiements.Sum(p => p.Montant);
-                    var totalAfter = paidBefore + line.Amount;
-                    DocumentTotalsHelper.EnsurePaymentsNotOverTtc(ba.TotalTtc, totalAfter);
-
-                    db.PaiementsBonAchat.Add(new PaiementBonAchat
-                    {
-                        BonAchatId = ba.Id,
-                        Montant = line.Amount,
-                        Date = date,
-                        Mode = request.Mode,
-                        Reference = reference
-                    });
-
-                    if (IsFullyPaid(ba.TotalTtc, totalAfter))
-                        ba.EstPayee = true;
-                }
+                if (IsFullyPaid(ba.TotalTtc, totalAfter))
+                    ba.EstPayee = true;
             }
 
             await db.SaveChangesAsync(cancellationToken);
@@ -114,42 +85,16 @@ public sealed class SupplierBulkPaymentService : ISupplierBulkPaymentService
         bool track,
         CancellationToken cancellationToken)
     {
-        IQueryable<FactureFournisseurEntity> facturesQ = db.FacturesFournisseurs
-            .Include(f => f.Paiements)
-            .Include(f => f.Lignes)
-            .Where(f => f.FournisseurId == fournisseurId);
         IQueryable<BonAchat> basQ = db.BonsAchat
             .Include(b => b.Paiements)
             .Include(b => b.Lignes)
             .Where(b => b.FournisseurId == fournisseurId);
 
         if (!track)
-        {
-            facturesQ = facturesQ.AsNoTracking();
             basQ = basQ.AsNoTracking();
-        }
 
-        var factures = await facturesQ.ToListAsync(cancellationToken);
         var bas = await basQ.ToListAsync(cancellationToken);
         var result = new List<SupplierBulkPayableDocument>();
-
-        foreach (var f in factures)
-        {
-            DocumentTotalsHelper.SyncFactureFournisseurTotalTtc(f);
-            var paid = f.Paiements.Sum(p => p.Montant);
-            var remaining = Math.Round(f.TotalTtc - paid, 2, MidpointRounding.AwayFromZero);
-            if (remaining <= DocumentTotalsHelper.PaiementTtcTolerance)
-                continue;
-
-            result.Add(new SupplierBulkPayableDocument(
-                SupplierBulkPayableDocumentKind.FactureFournisseur,
-                f.Id,
-                f.Numero,
-                f.Date.Date,
-                f.TotalTtc,
-                paid,
-                remaining));
-        }
 
         foreach (var b in bas)
         {
