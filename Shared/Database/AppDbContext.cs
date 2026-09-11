@@ -23,6 +23,7 @@ public class AppDbContext : DbContext
     public DbSet<BonAchat> BonsAchat => Set<BonAchat>();
     public DbSet<BonAchatLigne> BonAchatLignes => Set<BonAchatLigne>();
     public DbSet<PaiementBonAchat> PaiementsBonAchat => Set<PaiementBonAchat>();
+    public DbSet<ReglementGroupe> ReglementsGroupes => Set<ReglementGroupe>();
     public DbSet<BonRetour> BonsRetour => Set<BonRetour>();
     public DbSet<BonRetourLigne> BonRetourLignes => Set<BonRetourLigne>();
     public DbSet<BonRetourFournisseur> BonsRetourFournisseurs => Set<BonRetourFournisseur>();
@@ -74,11 +75,24 @@ public class AppDbContext : DbContext
         modelBuilder.Entity<PaiementBonSortie>(e =>
         {
             e.Property(p => p.Mode).HasConversion<int>();
+            e.HasIndex(p => p.ReglementGroupeId);
         });
 
         modelBuilder.Entity<PaiementBonAchat>(e =>
         {
             e.Property(p => p.Mode).HasConversion<int>();
+            e.HasIndex(p => p.ReglementGroupeId);
+        });
+
+        modelBuilder.Entity<ReglementGroupe>(e =>
+        {
+            e.ToTable("ReglementsGroupes");
+            e.Property(g => g.Sens).HasConversion<int>();
+            e.Property(g => g.Mode).HasConversion<int>();
+            e.Property(g => g.Reference).IsRequired();
+            e.Property(g => g.Note).IsRequired();
+            e.HasIndex(g => g.TiersId);
+            e.HasIndex(g => new { g.TiersId, g.Sens });
         });
 
         modelBuilder.Entity<BonRetour>(e =>

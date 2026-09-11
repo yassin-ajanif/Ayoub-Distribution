@@ -1,4 +1,5 @@
 using GestionCommerciale.Modules.Facturation.Models;
+using GestionCommerciale.Modules.Facturation.Services;
 using GestionCommerciale.Modules.Sortie.Models;
 using GestionCommerciale.Shared.Database;
 using GestionCommerciale.Shared.Helpers;
@@ -51,6 +52,7 @@ public sealed class BonSortieWorkflowService : IBonSortieWorkflowService
         p.Date = date;
         p.Mode = mode;
         p.Reference = reference;
+        await ReglementGroupeSync.RecalculateAsync(db, p.ReglementGroupeId, paiementId, null, montant, cancellationToken);
         await db.SaveChangesAsync(cancellationToken);
     }
 
@@ -58,7 +60,9 @@ public sealed class BonSortieWorkflowService : IBonSortieWorkflowService
     {
         await using var db = await _dbFactory.CreateDbContextAsync(cancellationToken);
         var p = await db.PaiementsBonSortie.FirstAsync(x => x.Id == paiementId && x.BonSortieId == factureId, cancellationToken);
+        var groupeId = p.ReglementGroupeId;
         db.PaiementsBonSortie.Remove(p);
+        await ReglementGroupeSync.RecalculateAsync(db, groupeId, paiementId, null, 0, cancellationToken);
         await db.SaveChangesAsync(cancellationToken);
     }
 }

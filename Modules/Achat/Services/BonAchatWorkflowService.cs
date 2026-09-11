@@ -1,4 +1,5 @@
 using GestionCommerciale.Modules.Facturation.Models;
+using GestionCommerciale.Modules.Facturation.Services;
 using GestionCommerciale.Modules.Achat.Models;
 using GestionCommerciale.Shared.Database;
 using GestionCommerciale.Shared.Helpers;
@@ -51,6 +52,7 @@ public sealed class BonAchatWorkflowService : IBonAchatWorkflowService
         p.Date = date;
         p.Mode = mode;
         p.Reference = reference;
+        await ReglementGroupeSync.RecalculateAsync(db, p.ReglementGroupeId, null, paiementId, montant, cancellationToken);
         await db.SaveChangesAsync(cancellationToken);
     }
 
@@ -58,7 +60,9 @@ public sealed class BonAchatWorkflowService : IBonAchatWorkflowService
     {
         await using var db = await _dbFactory.CreateDbContextAsync(cancellationToken);
         var p = await db.PaiementsBonAchat.FirstAsync(x => x.Id == paiementId && x.BonAchatId == factureId, cancellationToken);
+        var groupeId = p.ReglementGroupeId;
         db.PaiementsBonAchat.Remove(p);
+        await ReglementGroupeSync.RecalculateAsync(db, groupeId, null, paiementId, 0, cancellationToken);
         await db.SaveChangesAsync(cancellationToken);
     }
 }

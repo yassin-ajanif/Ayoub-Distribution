@@ -57,7 +57,8 @@ public sealed class SupplierAccountStatementService : ISupplierAccountStatementS
                     p.Date,
                     p.Montant,
                     p.Mode,
-                    p.Reference
+                    p.Reference,
+                    p.ReglementGroupeId
                 }).ToList()
             })
             .ToListAsync(cancellationToken);
@@ -104,7 +105,8 @@ public sealed class SupplierAccountStatementService : ISupplierAccountStatementS
         {
             foreach (var p in b.Paiements)
             {
-                if (p.Montant <= 0 || p.Mode == ModePaiement.Credit) continue;
+                if (p.Montant <= 0 || p.Mode == ModePaiement.Credit || p.ReglementGroupeId != null)
+                    continue;
                 var observation = string.IsNullOrWhiteSpace(p.Reference) ? string.Empty : p.Reference.Trim();
                 entries.Add((
                     p.Date.Date,
@@ -115,6 +117,24 @@ public sealed class SupplierAccountStatementService : ISupplierAccountStatementS
                     0,
                     p.Montant));
             }
+        }
+
+        var groupes = await db.ReglementsGroupes.AsNoTracking()
+            .Where(g => g.TiersId == fournisseurId && g.Sens == SensReglement.Reglement && g.Montant > 0)
+            .ToListAsync(cancellationToken);
+        foreach (var g in groupes)
+        {
+            if (g.Mode == ModePaiement.Credit)
+                continue;
+            var observation = string.IsNullOrWhiteSpace(g.Reference) ? string.Empty : g.Reference.Trim();
+            entries.Add((
+                g.Date.Date,
+                ClientAccountEntryKind.Paiement,
+                g.Id,
+                PaymentDesignation(g.Mode),
+                observation,
+                0,
+                g.Montant));
         }
 
         var ordered = entries

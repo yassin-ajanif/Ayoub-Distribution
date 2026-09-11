@@ -43,6 +43,18 @@ public sealed class SupplierBulkPaymentService : ISupplierBulkPaymentService
         {
             var open = await LoadOpenDocumentsAsync(db, request.FournisseurId, track: true, cancellationToken);
             var preview = Allocate(open, amount);
+            var groupe = new ReglementGroupe
+            {
+                TiersId = request.FournisseurId,
+                Sens = SensReglement.Reglement,
+                Date = date,
+                Montant = amount,
+                Mode = request.Mode,
+                Reference = reference,
+                Note = string.Empty
+            };
+            db.ReglementsGroupes.Add(groupe);
+            await db.SaveChangesAsync(cancellationToken);
 
             foreach (var line in preview.Lines)
             {
@@ -59,6 +71,7 @@ public sealed class SupplierBulkPaymentService : ISupplierBulkPaymentService
                 db.PaiementsBonAchat.Add(new PaiementBonAchat
                 {
                     BonAchatId = ba.Id,
+                    ReglementGroupeId = groupe.Id,
                     Montant = line.Amount,
                     Date = date,
                     Mode = request.Mode,

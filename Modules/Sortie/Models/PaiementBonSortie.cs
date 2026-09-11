@@ -7,6 +7,8 @@ public class PaiementBonSortie : BaseEntity
 {
     public int BonSortieId { get; set; }
     public BonSortie? BonSortie { get; set; }
+    /// <summary>Set when this row is a slice of a handed amount stored on <see cref="Facturation.Models.ReglementGroupe"/>.</summary>
+    public int? ReglementGroupeId { get; set; }
     public decimal Montant { get; set; }
     public DateTime Date { get; set; }
     public ModePaiement Mode { get; set; }
