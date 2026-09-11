@@ -274,7 +274,8 @@ public enum ReportProfitChargeKind
     BonRetourClient,
     Purchase,
     BonRetourFournisseur,
-    Charge
+    Charge,
+    Promo
 }
 
 public sealed class ReportProfitChargeRow
@@ -287,7 +288,8 @@ public sealed class ReportProfitChargeRow
         decimal montantHt,
         decimal amount,
         string devise,
-        bool isPositive)
+        bool isPositive,
+        int documentId)
     {
         Kind = kind;
         TypeLabel = typeLabel;
@@ -297,6 +299,7 @@ public sealed class ReportProfitChargeRow
         Amount = amount;
         Devise = devise;
         IsPositive = isPositive;
+        DocumentId = documentId;
         LblDate = date.ToString("d");
         LblMontantHt = montantHt > 0 ? $"{montantHt:N2} {devise}" : "—";
         var sign = amount >= 0 ? "+" : "";
@@ -304,6 +307,7 @@ public sealed class ReportProfitChargeRow
     }
 
     public ReportProfitChargeKind Kind { get; }
+    public int DocumentId { get; }
     public string TypeLabel { get; }
     public string RefLibelle { get; }
     public DateTime Date { get; }
@@ -324,6 +328,7 @@ public sealed class ReportProfitChargesResult
     public required decimal TotalPurchases { get; init; }
     public required decimal TotalBonsRetourFournisseur { get; init; }
     public required decimal TotalCharges { get; init; }
+    public required decimal TotalPromo { get; init; }
     public required decimal NetResult { get; init; }
     public required string Devise { get; init; }
     public required List<ReportProfitChargeRow> Rows { get; init; }

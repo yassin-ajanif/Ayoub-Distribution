@@ -40,9 +40,22 @@ public partial class ReportsListView : UserControl
             case "Charges":
                 vm.FilterProfitChargesCommand.Execute(null);
                 break;
+            case "Promo":
+                vm.FilterProfitPromoCommand.Execute(null);
+                break;
             case "All":
                 vm.FilterProfitAllCommand.Execute(null);
                 break;
         }
+    }
+
+    private void OnProfitRowTapped(object? sender, TappedEventArgs e)
+    {
+        if (DataContext is not ReportsListViewModel vm)
+            return;
+        if (sender is not Border { DataContext: ReportProfitChargeRow row })
+            return;
+
+        vm.OpenProfitDocumentCommand.Execute(row);
     }
 }

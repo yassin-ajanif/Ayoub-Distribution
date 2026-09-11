@@ -3,6 +3,7 @@ using GestionCommerciale.Modules.BonRetourFournisseur.Models;
 using GestionCommerciale.Modules.Facturation.Models;
 using GestionCommerciale.Modules.Reporting.ViewModels;
 using GestionCommerciale.Modules.Sortie.Models;
+using GestionCommerciale.Modules.Sortie.ViewModels;
 using GestionCommerciale.Modules.Stock.Models;
 using GestionCommerciale.Shared.Database;
 using GestionCommerciale.Shared.Helpers;
@@ -470,17 +471,20 @@ public sealed class ReportService : IReportService
         var typeCharge = _locale.T("Reports_TypeCharge");
         var typeBonRetourClient = _locale.T("Reports_TypeBonRetourClient");
         var typeBonRetourFournisseur = _locale.T("Reports_TypeBonRetourFournisseur");
+        var typePromo = _locale.T("Reports_TypePromo");
 
         var bonsSortie = await db.BonsSortie.AsNoTracking()
             .Where(b => b.Date >= from && b.Date < toEnd)
             .Select(b => new
             {
+                b.Id,
                 b.Numero,
                 b.Date,
                 b.RemiseGlobale,
                 Lignes = b.Lignes!.Select(l => new
                 {
                     l.ProduitId,
+                    l.Designation,
                     l.Quantite,
                     l.PrixUnitaireHT,
                     l.Remise,
@@ -493,6 +497,7 @@ public sealed class ReportService : IReportService
             .Where(a => a.Date >= from && a.Date < toEnd)
             .Select(a => new
             {
+                a.Id,
                 a.Numero,
                 a.Date,
                 Lignes = a.Lignes!.Select(l => new
@@ -511,14 +516,15 @@ public sealed class ReportService : IReportService
             .Distinct()
             .ToList();
         var prodMap = allProdIds.Count == 0
-            ? new Dictionary<int, decimal>()
+            ? new Dictionary<int, (decimal Achat, decimal Vente)>()
             : await db.Produits.AsNoTracking()
                 .Where(p => allProdIds.Contains(p.Id))
-                .ToDictionaryAsync(p => p.Id, p => p.PrixAchatHT, ct);
+                .ToDictionaryAsync(p => p.Id, p => (Achat: p.PrixAchatHT, Vente: p.PrixVenteHT), ct);
 
         decimal totalMargin = 0;
         decimal totalVente = 0;
         decimal totalBonsRetourClient = 0;
+        decimal totalPromo = 0;
 
         foreach (var b in bonsSortie)
         {
@@ -529,7 +535,28 @@ public sealed class ReportService : IReportService
                 var lht = DocumentTotalsHelper.LigneHT(l.Quantite, l.PrixUnitaireHT, l.Remise);
                 ht += lht;
                 ttc += lht * (1 + l.TauxTVA / 100m);
-                costHt += l.Quantite * prodMap.GetValueOrDefault(l.ProduitId);
+                costHt += l.Quantite * (prodMap.TryGetValue(l.ProduitId, out var prices) ? prices.Achat : 0);
+                if (BonSortieLineRow.LooksLikePromo(l.Designation)
+                    && prodMap.TryGetValue(l.ProduitId, out var promoPrices)
+                    && promoPrices.Vente > 0)
+                {
+                    var catalogHt = DocumentTotalsHelper.LigneHT(l.Quantite, promoPrices.Vente, 0);
+                    var catalogTtc = catalogHt * (1 + l.TauxTVA / 100m);
+                    if (catalogTtc > 0)
+                    {
+                        totalPromo += catalogTtc;
+                        rows.Add(new ReportProfitChargeRow(
+                            ReportProfitChargeKind.Promo,
+                            typePromo,
+                            string.IsNullOrWhiteSpace(l.Designation) ? b.Numero ?? string.Empty : $"{b.Numero} — {l.Designation}",
+                            b.Date,
+                            catalogTtc,
+                            -catalogTtc,
+                            dev,
+                            false,
+                            b.Id));
+                    }
+                }
             }
             ht *= factor;
             ttc *= factor;
@@ -544,7 +571,8 @@ public sealed class ReportService : IReportService
                 ttc,
                 profit,
                 dev,
-                profit >= 0));
+                profit >= 0,
+                b.Id));
         }
 
         foreach (var a in avoirsClient)
@@ -566,13 +594,15 @@ public sealed class ReportService : IReportService
                 ttc,
                 -ttc,
                 dev,
-                false));
+                false,
+                a.Id));
         }
 
         var facturesFournisseur = await db.BonsAchat.AsNoTracking()
             .Where(f => f.Date >= from && f.Date < toEnd)
             .Select(f => new
             {
+                f.Id,
                 f.Numero,
                 f.Date,
                 f.RemiseGlobale,
@@ -607,13 +637,15 @@ public sealed class ReportService : IReportService
                 ttc,
                 -ttc,
                 dev,
-                false));
+                false,
+                f.Id));
         }
 
         var avoirsFournisseur = await db.BonsRetourFournisseurs.AsNoTracking()
             .Where(a => a.Date >= from && a.Date < toEnd)
             .Select(a => new
             {
+                a.Id,
                 a.Numero,
                 a.Date,
                 Lignes = a.Lignes!.Select(l => new
@@ -645,7 +677,8 @@ public sealed class ReportService : IReportService
                 ttc,
                 ttc,
                 dev,
-                true));
+                true,
+                a.Id));
         }
 
         var charges = await db.Charges.AsNoTracking()
@@ -671,12 +704,13 @@ public sealed class ReportService : IReportService
                 c.MontantTtc,
                 -c.MontantTtc,
                 dev,
-                false));
+                false,
+                c.Id));
         }
 
         var sorted = rows.OrderByDescending(r => r.Date).ThenBy(r => r.TypeLabel).ToList();
-        // Net = total vente + total avoir fournisseur - charge - achat - avoir client
-        var net = totalVente + totalBonsRetourFournisseur - totalCharges - totalPurchases - totalBonsRetourClient;
+        // Net = total vente + total avoir fournisseur - charge - achat - avoir client - promo
+        var net = totalVente + totalBonsRetourFournisseur - totalCharges - totalPurchases - totalBonsRetourClient - totalPromo;
 
         return new ReportProfitChargesResult
         {
@@ -686,6 +720,7 @@ public sealed class ReportService : IReportService
             TotalPurchases = totalPurchases,
             TotalBonsRetourFournisseur = totalBonsRetourFournisseur,
             TotalCharges = totalCharges,
+            TotalPromo = totalPromo,
             NetResult = net,
             Devise = dev,
             Rows = sorted

@@ -492,7 +492,7 @@
 
         <!-- Profit & charges report -->
         <StackPanel Spacing="8" IsVisible="{Binding ShowProfitCharges}">
-          <Grid ColumnDefinitions="*,*,*,*,*,*,*">
+          <Grid ColumnDefinitions="*,*,*,*,*,*,*,*">
             <Border Grid.Column="0" Tag="Ventes" Margin="0,0,4,0" Padding="12,12" Cursor="Hand"
                     Background="{DynamicResource CourseraSurfaceBrush}"
                     BorderBrush="{Binding IsProfitFilterMarginActive, Converter={x:Static conv:NavTabHighlightConverter.Instance}, ConverterParameter=border}"
@@ -565,7 +565,19 @@
                            Foreground="{DynamicResource CourseraDangerBrush}"/>
               </StackPanel>
             </Border>
-            <Border Grid.Column="6" Tag="All" Margin="4,0,0,0" Padding="12,12" Cursor="Hand"
+            <Border Grid.Column="6" Tag="Promo" Margin="4,0" Padding="12,12" Cursor="Hand"
+                    Background="{DynamicResource CourseraSurfaceBrush}"
+                    BorderBrush="{Binding IsProfitFilterPromoActive, Converter={x:Static conv:NavTabHighlightConverter.Instance}, ConverterParameter=border}"
+                    BorderThickness="{Binding IsProfitFilterPromoActive, Converter={x:Static conv:BoolToThicknessConverter.Instance}}"
+                    CornerRadius="10"
+                    Tapped="OnProfitFilterCardTapped">
+              <StackPanel Spacing="4">
+                <TextBlock Text="{Binding LblProfitChargesPromoLabel}" Classes="subtle" FontSize="11" TextWrapping="Wrap"/>
+                <TextBlock Text="{Binding LblProfitChargesTotalPromo}" FontWeight="Bold" FontSize="14"
+                           Foreground="{DynamicResource CourseraDangerBrush}"/>
+              </StackPanel>
+            </Border>
+            <Border Grid.Column="7" Tag="All" Margin="4,0,0,0" Padding="12,12" Cursor="Hand"
                     Background="{DynamicResource CourseraSurfaceBrush}"
                     BorderBrush="{DynamicResource CourseraBorderBrush}"
                     BorderThickness="1"
@@ -595,9 +607,10 @@
               <ItemsControl ItemsSource="{Binding ProfitCharges}">
                 <ItemsControl.ItemTemplate>
                   <DataTemplate x:DataType="vm:ReportProfitChargeRow">
-                    <Border Padding="10,8" Margin="0,0,0,4"
+                    <Border Padding="10,8" Margin="0,0,0,4" Cursor="Hand"
                             Background="{DynamicResource CourseraSurfaceMutedBrush}"
-                            CornerRadius="8">
+                            CornerRadius="8"
+                            Tapped="OnProfitRowTapped">
                       <Grid ColumnDefinitions="1.2*,2*,1*,1*,1.2*">
                         <Border Grid.Column="0" HorizontalAlignment="Left" Padding="10,4" CornerRadius="6"
                                 Background="{Binding IsPositive, Converter={x:Static conv:PositiveNegativeForegroundConverter.Instance}, ConverterParameter=bg}">
@@ -605,7 +618,9 @@
                                      Foreground="{Binding IsPositive, Converter={x:Static conv:PositiveNegativeForegroundConverter.Instance}}"/>
                         </Border>
                         <TextBlock Grid.Column="1" Text="{Binding RefLibelle}" FontSize="13"
-                                   VerticalAlignment="Center" TextWrapping="Wrap"/>
+                                   VerticalAlignment="Center" TextWrapping="Wrap"
+                                   TextDecorations="Underline"
+                                   Foreground="{DynamicResource CourseraPrimaryBrush}"/>
                         <TextBlock Grid.Column="2" Text="{Binding LblDate}" FontSize="13"
                                    VerticalAlignment="Center"/>
                         <TextBlock Grid.Column="3" Text="{Binding LblMontantHt}" FontSize="13"

@@ -1,11 +1,17 @@
 using System.Collections.ObjectModel;
 using CommunityToolkit.Mvvm.ComponentModel;
 using CommunityToolkit.Mvvm.Input;
-using GestionCommerciale.Modules.Reporting.Services;
+using GestionCommerciale.Modules.Achat.ViewModels;
 using GestionCommerciale.Modules.Auth.Services;
+using GestionCommerciale.Modules.BonRetourFournisseur.ViewModels;
+using GestionCommerciale.Modules.Charges.ViewModels;
+using GestionCommerciale.Modules.Facturation.ViewModels;
+using GestionCommerciale.Modules.Reporting.Services;
+using GestionCommerciale.Modules.Sortie.ViewModels;
 using GestionCommerciale.Shared.Helpers;
 using GestionCommerciale.Shared.Services;
 using GestionCommerciale.Shared.ViewModels;
+using Microsoft.Extensions.DependencyInjection;
 
 namespace GestionCommerciale.Modules.Reporting.ViewModels;
 
@@ -15,17 +21,23 @@ public partial class ReportsListViewModel : BaseViewModel
     private readonly IDialogService _dialog;
     private readonly ICurrentUserSession _session;
     private readonly ILocaleService _locale;
+    private readonly WorkspaceNavigator _workspace;
+    private readonly IServiceProvider _sp;
 
     public ReportsListViewModel(
         IReportService reportService,
         IDialogService dialog,
         ICurrentUserSession session,
-        ILocaleService locale)
+        ILocaleService locale,
+        WorkspaceNavigator workspace,
+        IServiceProvider sp)
     {
         _reportService = reportService;
         _dialog = dialog;
         _session = session;
         _locale = locale;
+        _workspace = workspace;
+        _sp = sp;
         _locale.CultureApplied += (_, _) => RefreshLabels();
         Pagination = new PaginationHelper(ApplyCurrentPage);
         DatePresets = new DatePresetChipsModel(_locale, (from, to) =>
@@ -91,6 +103,7 @@ public partial class ReportsListViewModel : BaseViewModel
     [ObservableProperty] private string _lblProfitChargesTotalPurchases = string.Empty;
     [ObservableProperty] private string _lblProfitChargesTotalBonsRetourFournisseur = string.Empty;
     [ObservableProperty] private string _lblProfitChargesTotalCharges = string.Empty;
+    [ObservableProperty] private string _lblProfitChargesTotalPromo = string.Empty;
     [ObservableProperty] private string _lblProfitChargesNetResult = string.Empty;
     [ObservableProperty] private bool _isNetPositive = true;
     [ObservableProperty] private string _lblProfitChargesMarginLabel = string.Empty;
@@ -99,6 +112,7 @@ public partial class ReportsListViewModel : BaseViewModel
     [ObservableProperty] private string _lblProfitChargesPurchasesLabel = string.Empty;
     [ObservableProperty] private string _lblProfitChargesBonsRetourFournisseurLabel = string.Empty;
     [ObservableProperty] private string _lblProfitChargesChargesLabel = string.Empty;
+    [ObservableProperty] private string _lblProfitChargesPromoLabel = string.Empty;
     [ObservableProperty] private string _lblProfitChargesNetLabel = string.Empty;
     [ObservableProperty] private string _colProfitType = string.Empty;
     [ObservableProperty] private string _colProfitRef = string.Empty;
@@ -111,6 +125,7 @@ public partial class ReportsListViewModel : BaseViewModel
     [ObservableProperty] private bool _isProfitFilterPurchasesActive;
     [ObservableProperty] private bool _isProfitFilterBonsRetourFournisseurActive;
     [ObservableProperty] private bool _isProfitFilterChargesActive;
+    [ObservableProperty] private bool _isProfitFilterPromoActive;
     [ObservableProperty] private bool _isProfitFilterAllActive = true;
 
     private List<ReportSaleByProductRow> _allSalesByProduct = [];
@@ -159,6 +174,7 @@ public partial class ReportsListViewModel : BaseViewModel
         LblProfitChargesPurchasesLabel = _locale.T("Reports_LblTotalPurchases");
         LblProfitChargesBonsRetourFournisseurLabel = _locale.T("Reports_LblTotalBonsRetourFournisseur");
         LblProfitChargesChargesLabel = _locale.T("Reports_LblTotalCharges");
+        LblProfitChargesPromoLabel = _locale.T("Reports_LblTotalPromo");
         LblProfitChargesNetLabel = _locale.T("Reports_LblNetResult");
         ColProfitType = _locale.T("Reports_ColType");
         ColProfitRef = _locale.T("Reports_ColRefLibelle");
@@ -326,6 +342,7 @@ public partial class ReportsListViewModel : BaseViewModel
         LblProfitChargesTotalPurchases = $"-{result.TotalPurchases:N2} {dev}";
         LblProfitChargesTotalBonsRetourFournisseur = $"+{result.TotalBonsRetourFournisseur:N2} {dev}";
         LblProfitChargesTotalCharges = $"-{result.TotalCharges:N2} {dev}";
+        LblProfitChargesTotalPromo = $"-{result.TotalPromo:N2} {dev}";
         var netSign = result.NetResult >= 0 ? "+" : "";
         LblProfitChargesNetResult = $"{netSign}{result.NetResult:N2} {dev}";
         IsNetPositive = result.NetResult >= 0;
@@ -348,7 +365,57 @@ public partial class ReportsListViewModel : BaseViewModel
     private void FilterProfitCharges() => ToggleProfitFilter(ReportProfitChargeKind.Charge);
 
     [RelayCommand]
+    private void FilterProfitPromo() => ToggleProfitFilter(ReportProfitChargeKind.Promo);
+
+    [RelayCommand]
     private void FilterProfitAll() => ToggleProfitFilter(null);
+
+    [RelayCommand]
+    private void OpenProfitDocument(ReportProfitChargeRow? row)
+    {
+        if (row == null || row.DocumentId <= 0)
+            return;
+
+        switch (row.Kind)
+        {
+            case ReportProfitChargeKind.SaleMargin:
+            case ReportProfitChargeKind.Promo:
+            {
+                var vm = _sp.GetRequiredService<BonSortieEditViewModel>();
+                vm.Load(row.DocumentId);
+                _workspace.Open(vm);
+                break;
+            }
+            case ReportProfitChargeKind.BonRetourClient:
+            {
+                var vm = _sp.GetRequiredService<BonRetourEditViewModel>();
+                vm.Load(row.DocumentId);
+                _workspace.Open(vm);
+                break;
+            }
+            case ReportProfitChargeKind.Purchase:
+            {
+                var vm = _sp.GetRequiredService<BonAchatEditViewModel>();
+                vm.Load(row.DocumentId);
+                _workspace.Open(vm);
+                break;
+            }
+            case ReportProfitChargeKind.BonRetourFournisseur:
+            {
+                var vm = _sp.GetRequiredService<BonRetourFournisseurEditViewModel>();
+                vm.Load(row.DocumentId);
+                _workspace.Open(vm);
+                break;
+            }
+            case ReportProfitChargeKind.Charge:
+            {
+                var vm = _sp.GetRequiredService<ChargeEditViewModel>();
+                vm.Load(row.DocumentId);
+                _workspace.Open(vm);
+                break;
+            }
+        }
+    }
 
     private void ToggleProfitFilter(ReportProfitChargeKind? kind)
     {
@@ -365,6 +432,7 @@ public partial class ReportsListViewModel : BaseViewModel
         IsProfitFilterPurchasesActive = kind == ReportProfitChargeKind.Purchase;
         IsProfitFilterBonsRetourFournisseurActive = kind == ReportProfitChargeKind.BonRetourFournisseur;
         IsProfitFilterChargesActive = kind == ReportProfitChargeKind.Charge;
+        IsProfitFilterPromoActive = kind == ReportProfitChargeKind.Promo;
         IsProfitFilterAllActive = kind == null;
 
         _filteredProfitCharges = kind == null
