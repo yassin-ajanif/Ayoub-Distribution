@@ -26,6 +26,16 @@ public sealed class ClientLedgerDisplayRow
     public string BalanceText { get; init; } = string.Empty;
 }
 
+internal enum LedgerRangeKind
+{
+    All,
+    Today,
+    Week,
+    Month,
+    Year,
+    Custom
+}
+
 public partial class TiersDetailViewModel : BaseViewModel
 {
     private readonly IDbContextFactory<AppDbContext> _dbFactory;
@@ -100,6 +110,22 @@ public partial class TiersDetailViewModel : BaseViewModel
     [ObservableProperty] private string _lblLedgerTitle = string.Empty;
     [ObservableProperty] private string _lblSoldeActuel = string.Empty;
     [ObservableProperty] private string _soldeActuelText = string.Empty;
+    [ObservableProperty] private string _lblLedgerPeriod = string.Empty;
+    [ObservableProperty] private string _periodSoldeText = string.Empty;
+    [ObservableProperty] private string _btnLedgerToday = string.Empty;
+    [ObservableProperty] private string _btnLedgerWeek = string.Empty;
+    [ObservableProperty] private string _btnLedgerMonth = string.Empty;
+    [ObservableProperty] private string _btnLedgerYear = string.Empty;
+    [ObservableProperty] private string _btnLedgerAll = string.Empty;
+    [ObservableProperty] private string _lblLedgerFrom = string.Empty;
+    [ObservableProperty] private string _lblLedgerTo = string.Empty;
+    [ObservableProperty] private DateTime? _ledgerFrom;
+    [ObservableProperty] private DateTime? _ledgerTo;
+    [ObservableProperty] private bool _isLedgerRangeAll = true;
+    [ObservableProperty] private bool _isLedgerRangeToday;
+    [ObservableProperty] private bool _isLedgerRangeWeek;
+    [ObservableProperty] private bool _isLedgerRangeMonth;
+    [ObservableProperty] private bool _isLedgerRangeYear;
     [ObservableProperty] private string _btnPdfLedger = string.Empty;
     [ObservableProperty] private string _lblLedgerDate = string.Empty;
     [ObservableProperty] private string _lblLedgerDesignation = string.Empty;
@@ -127,6 +153,8 @@ public partial class TiersDetailViewModel : BaseViewModel
 
     public ObservableCollection<ClientLedgerDisplayRow> LedgerRows { get; } = [];
     public ObservableCollection<TypeTiers> Types { get; } = [];
+    private readonly List<ClientAccountStatementRow> _ledgerSource = [];
+    private bool _suppressLedgerRange;
     public ObservableCollection<ModePaiement> BulkPayModes { get; } = [];
 
     public bool CanEditType => _returnScope == TiersListScope.Fournisseurs;
@@ -173,6 +201,14 @@ public partial class TiersDetailViewModel : BaseViewModel
         LblLedgerSaveFirst = _returnScope == TiersListScope.Fournisseurs
             ? _locale.T("SupplierLedger_SaveFirst")
             : _locale.T("ClientLedger_SaveFirst");
+        BtnLedgerToday = _locale.T("ClientLedger_RangeToday");
+        BtnLedgerWeek = _locale.T("ClientLedger_RangeWeek");
+        BtnLedgerMonth = _locale.T("ClientLedger_RangeMonth");
+        BtnLedgerYear = _locale.T("ClientLedger_RangeYear");
+        BtnLedgerAll = _locale.T("ClientLedger_RangeAll");
+        LblLedgerFrom = _locale.T("ClientLedger_RangeFrom");
+        LblLedgerTo = _locale.T("ClientLedger_RangeTo");
+        RefreshPeriodLabel();
         LblBulkPayTitle = _returnScope == TiersListScope.Fournisseurs
             ? _locale.T("SupplierLedger_BulkPayTitle")
             : _locale.T("ClientLedger_BulkPayTitle");
@@ -227,7 +263,9 @@ public partial class TiersDetailViewModel : BaseViewModel
         RebuildTypeOptions();
         TiersId = tiersId;
         LedgerRows.Clear();
+        _ledgerSource.Clear();
         SoldeActuelText = string.Empty;
+        PeriodSoldeText = string.Empty;
         ShowLedger = returnScope == TiersListScope.Clients || returnScope == TiersListScope.Fournisseurs;
         ShowLedgerSaveFirst = tiersId == null && ShowLedger;
         ShowLedgerEmpty = false;
@@ -297,7 +335,9 @@ public partial class TiersDetailViewModel : BaseViewModel
             else
             {
                 LedgerRows.Clear();
+                _ledgerSource.Clear();
                 SoldeActuelText = string.Empty;
+                PeriodSoldeText = string.Empty;
                 ShowLedgerEmpty = false;
             }
 
@@ -322,9 +362,98 @@ public partial class TiersDetailViewModel : BaseViewModel
         var statement = _returnScope == TiersListScope.Fournisseurs
             ? await _supplierLedgerService.GetStatementAsync(tiersId, cancellationToken)
             : await _clientLedgerService.GetStatementAsync(tiersId, cancellationToken);
-        LedgerRows.Clear();
-        foreach (var row in statement.Rows)
+        _ledgerSource.Clear();
+        _ledgerSource.AddRange(statement.Rows);
+        SoldeActuelText = FormatAmount(statement.SoldeActuel);
+        ApplyLedgerFilter();
+    }
+
+    partial void OnLedgerFromChanged(DateTime? value)
+    {
+        if (_suppressLedgerRange) return;
+        SetLedgerPreset(LedgerRangeKind.Custom);
+        ApplyLedgerFilter();
+    }
+
+    partial void OnLedgerToChanged(DateTime? value)
+    {
+        if (_suppressLedgerRange) return;
+        SetLedgerPreset(LedgerRangeKind.Custom);
+        ApplyLedgerFilter();
+    }
+
+    [RelayCommand]
+    private void SetLedgerAll() => ApplyPreset(LedgerRangeKind.All);
+
+    [RelayCommand]
+    private void SetLedgerToday() => ApplyPreset(LedgerRangeKind.Today);
+
+    [RelayCommand]
+    private void SetLedgerWeek() => ApplyPreset(LedgerRangeKind.Week);
+
+    [RelayCommand]
+    private void SetLedgerMonth() => ApplyPreset(LedgerRangeKind.Month);
+
+    [RelayCommand]
+    private void SetLedgerYear() => ApplyPreset(LedgerRangeKind.Year);
+
+    private void ApplyPreset(LedgerRangeKind kind)
+    {
+        var today = DateTime.Today;
+        SetLedgerPreset(kind);
+        switch (kind)
         {
+            case LedgerRangeKind.Today:
+                SetLedgerDates(today, today);
+                break;
+            case LedgerRangeKind.Week:
+                var weekStart = StartOfWeek(today);
+                SetLedgerDates(weekStart, weekStart.AddDays(6));
+                break;
+            case LedgerRangeKind.Month:
+                SetLedgerDates(new DateTime(today.Year, today.Month, 1), new DateTime(today.Year, today.Month, DateTime.DaysInMonth(today.Year, today.Month)));
+                break;
+            case LedgerRangeKind.Year:
+                SetLedgerDates(new DateTime(today.Year, 1, 1), new DateTime(today.Year, 12, 31));
+                break;
+            default:
+                SetLedgerDates(null, null);
+                break;
+        }
+
+        ApplyLedgerFilter();
+    }
+
+    private void SetLedgerDates(DateTime? from, DateTime? to)
+    {
+        _suppressLedgerRange = true;
+        LedgerFrom = from;
+        LedgerTo = to;
+        _suppressLedgerRange = false;
+    }
+
+    private void SetLedgerPreset(LedgerRangeKind kind)
+    {
+        IsLedgerRangeAll = kind == LedgerRangeKind.All;
+        IsLedgerRangeToday = kind == LedgerRangeKind.Today;
+        IsLedgerRangeWeek = kind == LedgerRangeKind.Week;
+        IsLedgerRangeMonth = kind == LedgerRangeKind.Month;
+        IsLedgerRangeYear = kind == LedgerRangeKind.Year;
+    }
+
+    private void ApplyLedgerFilter()
+    {
+        var from = LedgerFrom?.Date;
+        var to = LedgerTo?.Date;
+        if (from.HasValue && to.HasValue && from > to)
+            (from, to) = (to, from);
+
+        LedgerRows.Clear();
+        foreach (var row in _ledgerSource)
+        {
+            if (!IsInLedgerRange(row.Date, from, to))
+                continue;
+
             LedgerRows.Add(new ClientLedgerDisplayRow
             {
                 DateText = row.IsAllocationDetail ? string.Empty : row.Date.ToString("dd/MM/yyyy"),
@@ -336,8 +465,91 @@ public partial class TiersDetailViewModel : BaseViewModel
             });
         }
 
-        SoldeActuelText = FormatAmount(statement.SoldeActuel);
+        PeriodSoldeText = FormatAmount(ClosingBalanceForRange(from, to));
+        RefreshPeriodLabel();
         ShowLedgerEmpty = LedgerRows.Count == 0;
+    }
+
+    private decimal ClosingBalanceForRange(DateTime? from, DateTime? to)
+    {
+        if (from == null && to == null)
+            return _ledgerSource.Count == 0 ? 0 : _ledgerSource[^1].Balance;
+
+        var end = to ?? DateTime.MaxValue.Date;
+        ClientAccountStatementRow? last = null;
+        foreach (var row in _ledgerSource)
+        {
+            if (row.IsAllocationDetail || row.Date.Date > end)
+                continue;
+            last = row;
+        }
+
+        return last?.Balance ?? 0;
+    }
+
+    private void RefreshPeriodLabel()
+    {
+        if (IsLedgerRangeToday)
+        {
+            LblLedgerPeriod = _locale.T("ClientLedger_PeriodToday");
+            return;
+        }
+
+        if (IsLedgerRangeWeek)
+        {
+            LblLedgerPeriod = _locale.T("ClientLedger_PeriodWeek");
+            return;
+        }
+
+        if (IsLedgerRangeMonth)
+        {
+            LblLedgerPeriod = _locale.T("ClientLedger_PeriodMonth");
+            return;
+        }
+
+        if (IsLedgerRangeYear)
+        {
+            LblLedgerPeriod = _locale.T("ClientLedger_PeriodYear");
+            return;
+        }
+
+        if (IsLedgerRangeAll || (LedgerFrom == null && LedgerTo == null))
+        {
+            LblLedgerPeriod = _locale.T("ClientLedger_PeriodSoldeAll");
+            return;
+        }
+
+        var from = LedgerFrom?.Date;
+        var to = LedgerTo?.Date;
+        if (from.HasValue && to.HasValue && from > to)
+            (from, to) = (to, from);
+
+        var fromText = (from ?? to)!.Value.ToString("dd/MM/yyyy");
+        var toText = (to ?? from)!.Value.ToString("dd/MM/yyyy");
+        LblLedgerPeriod = _locale.Tf("ClientLedger_PeriodSolde", fromText, toText);
+    }
+
+    private static bool IsInLedgerRange(DateTime date, DateTime? from, DateTime? to)
+    {
+        var day = date.Date;
+        if (from.HasValue && day < from.Value) return false;
+        if (to.HasValue && day > to.Value) return false;
+        return true;
+    }
+
+    private static DateTime StartOfWeek(DateTime date)
+    {
+        var diff = ((int)date.DayOfWeek - (int)DayOfWeek.Monday + 7) % 7;
+        return date.AddDays(-diff);
+    }
+
+    private List<ClientAccountStatementRow> LedgerRowsInRange()
+    {
+        var from = LedgerFrom?.Date;
+        var to = LedgerTo?.Date;
+        if (from.HasValue && to.HasValue && from > to)
+            (from, to) = (to, from);
+        return _ledgerSource.Where(r => IsInLedgerRange(r.Date, from, to)).ToList();
     }
 
     private string FormatAmount(decimal amount) => CurrencyHelper.Format(amount, _devise);
@@ -551,9 +763,17 @@ public partial class TiersDetailViewModel : BaseViewModel
         {
             await using var db = await _dbFactory.CreateDbContextAsync(cancellationToken);
             var tiers = await db.Tiers.AsNoTracking().FirstAsync(t => t.Id == id, cancellationToken);
-            var statement = _returnScope == TiersListScope.Fournisseurs
-                ? await _supplierLedgerService.GetStatementAsync(id, cancellationToken)
-                : await _clientLedgerService.GetStatementAsync(id, cancellationToken);
+            if (_ledgerSource.Count == 0)
+                await LoadLedgerAsync(id, cancellationToken);
+            var from = LedgerFrom?.Date;
+            var to = LedgerTo?.Date;
+            if (from.HasValue && to.HasValue && from > to)
+                (from, to) = (to, from);
+            var statement = new ClientAccountStatementResult
+            {
+                Rows = LedgerRowsInRange(),
+                SoldeActuel = ClosingBalanceForRange(from, to)
+            };
             var bytes = _returnScope == TiersListScope.Fournisseurs
                 ? await _pdf.BuildSupplierAccountStatementPdfAsync(
                     tiers, statement, DocumentPartyPdfInfo.FromTiers(tiers), cancellationToken)
