@@ -309,13 +309,20 @@
                        Foreground="#3730A3"
                        HorizontalAlignment="Right"
                        IsVisible="{Binding ShowTotalTtc}"/>
-            <StackPanel Spacing="0" HorizontalAlignment="Right" IsVisible="{Binding HasPromo}">
-              <TextBlock Text="{Binding PromoTotalLabel}"
-                         TextDecorations="Strikethrough"
-                         FontSize="13"
-                         FontWeight="SemiBold"
-                         Foreground="#DC2626"
-                         HorizontalAlignment="Right"/>
+            <StackPanel Spacing="0" HorizontalAlignment="Stretch" IsVisible="{Binding HasPromo}">
+              <Grid ColumnDefinitions="*,8,Auto">
+                <TextBlock Text="{Binding LblTotalPromo}"
+                           FontSize="13"
+                           VerticalAlignment="Center"
+                           Opacity="0.75"/>
+                <TextBlock Grid.Column="2"
+                           Text="{Binding PromoTotalLabel}"
+                           TextDecorations="Strikethrough"
+                           FontSize="13"
+                           FontWeight="SemiBold"
+                           Foreground="#DC2626"
+                           HorizontalAlignment="Right"/>
+              </Grid>
               <TextBlock Text="0,00" FontSize="13" FontWeight="SemiBold" Foreground="#166534" HorizontalAlignment="Right"/>
             </StackPanel>
             <Border Height="1" Background="#C7D2FE" Margin="0,6,0,0" Opacity="0.6"/>

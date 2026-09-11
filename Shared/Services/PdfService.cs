@@ -8,6 +8,7 @@ using GestionCommerciale.Modules.FactureFournisseur.Models;
 using GestionCommerciale.Modules.Livraison;
 using GestionCommerciale.Modules.Livraison.Models;
 using GestionCommerciale.Modules.Sortie.Models;
+using GestionCommerciale.Modules.Sortie.ViewModels;
 using GestionCommerciale.Modules.Achat.Models;
 using GestionCommerciale.Modules.Reception.Models;
 using GestionCommerciale.Modules.Tiers.Models;
@@ -291,20 +292,36 @@ public sealed class PdfService : IPdfService
         var totals = DocumentTotalsHelper.BonSortieTotals(doc.Lignes, doc.RemiseGlobale);
         var vis = _uiPreferences.GetDocumentLineColumnVisibility("bon_sortie");
         var lineData = new List<StandardPdfLine>();
+        decimal promoTotalTtc = 0;
         foreach (var l in doc.Lignes)
         {
             var lht = DocumentTotalsHelper.LigneHT(l.Quantite, l.PrixUnitaireHT, l.Remise);
             var ttc = lht * (1 + l.TauxTVA / 100m);
+            var puCell = FmtUnitPrice(l.PrixUnitaireHT);
+            var htCell = FmtMoney(lht);
+            var ttcCell = FmtMoney(ttc);
+            if (BonSortieLineRow.LooksLikePromo(l.Designation)
+                && meta.TryGetValue(l.ProduitId, out var pm)
+                && pm.PrixVenteHt > 0)
+            {
+                var catalogHt = DocumentTotalsHelper.LigneHT(l.Quantite, pm.PrixVenteHt, 0);
+                var catalogTtc = catalogHt * (1 + l.TauxTVA / 100m);
+                promoTotalTtc += catalogTtc;
+                puCell = PdfPromoCell.Encode(FmtUnitPrice(pm.PrixVenteHt), FmtUnitPrice(0));
+                htCell = PdfPromoCell.Encode(FmtMoney(catalogHt), FmtMoney(0));
+                ttcCell = PdfPromoCell.Encode(FmtMoney(catalogTtc), FmtMoney(0));
+            }
+
             lineData.Add(new StandardPdfLine(
                 RefCell(meta, l.ProduitId),
                 l.Designation,
                 FmtQty(l.Quantite),
                 l.Conditionnement,
-                FmtUnitPrice(l.PrixUnitaireHT),
+                puCell,
                 FmtTvaPct(l.TauxTVA),
                 FmtMoney(l.Remise),
-                FmtMoney(lht),
-                FmtMoney(ttc)));
+                htCell,
+                ttcCell));
         }
 
         var (cols, rows) = BuildStandardPdfTable(vis, supportsLineRemise: true, "Qté", lineData);
@@ -319,7 +336,7 @@ public sealed class PdfService : IPdfService
         if (doc.RemiseGlobale > 0)
             docLines.Add(new("Remise globale", $"{doc.RemiseGlobale:N2} %"));
 
-        var model = BaseModel(cfg, "BON DE SORTIE", docLines, PartyLines(party, "Vendeur"), cols, rows, totals, doc.Note, vis.ShowMontantTtc);
+        var model = BaseModel(cfg, "BON DE SORTIE", docLines, PartyLines(party, "Vendeur"), cols, rows, totals, doc.Note, vis.ShowMontantTtc, promoTotalTtc > 0 ? promoTotalTtc : null);
         return CommercialDocumentPdfRenderer.Render(model, TryLoadLogoBytes(cfg.SocieteLogoPath));
     }
 
@@ -581,7 +598,8 @@ public sealed class PdfService : IPdfService
         List<IReadOnlyList<string>> rows,
         (decimal ht, decimal tva, decimal ttc) totals,
         string? note,
-        bool showTaxAndTtcInTotalsBox = true)
+        bool showTaxAndTtcInTotalsBox = true,
+        decimal? promoTotalTtc = null)
     {
         var qtyCol = FindQtyColumnIndex(columns);
         var refCol = FindRefColumnIndex(columns);
@@ -645,6 +663,7 @@ public sealed class PdfService : IPdfService
             TotalHt = totals.ht,
             TotalTva = totals.tva,
             TotalTtc = totals.ttc,
+            PromoTotalTtc = promoTotalTtc,
             Devise = cfg.Devise,
             AmountInWords = amountWords,
             Note = note,
@@ -774,7 +793,7 @@ public sealed class PdfService : IPdfService
         return list;
     }
 
-    private sealed record ProductPdfMeta(string Ref, string Unite);
+    private sealed record ProductPdfMeta(string Ref, string Unite, decimal PrixVenteHt = 0);
 
     private static string RefCell(Dictionary<int, ProductPdfMeta> meta, int produitId) =>
         produitId > 0 && meta.TryGetValue(produitId, out var m) && !string.IsNullOrWhiteSpace(m.Ref) ? m.Ref : "—";
@@ -811,7 +830,7 @@ public sealed class PdfService : IPdfService
         await using var db = await _dbFactory.CreateDbContextAsync(cancellationToken);
         return await db.Produits.AsNoTracking()
             .Where(p => ids.Contains(p.Id))
-            .ToDictionaryAsync(p => p.Id, p => new ProductPdfMeta(p.Reference ?? "", p.Unite ?? ""), cancellationToken);
+            .ToDictionaryAsync(p => p.Id, p => new ProductPdfMeta(p.Reference ?? "", p.Unite ?? "", p.PrixVenteHT), cancellationToken);
     }
 
     private static IReadOnlyList<string> BuildFooterLines(AppSettingsRow cfg)

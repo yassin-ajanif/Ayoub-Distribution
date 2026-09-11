@@ -17,6 +17,8 @@ public static class CommercialDocumentPdfRenderer
     private const string TextMuted = "#6B7280";
     private const string AmountBoxBg = PanelBg;
     private const string TtcBlue = "#3730A3";
+    private const string PromoStruck = "#DC2626";
+    private const string PromoFree = "#166534";
     private const string SummaryRowBg = "#E5E7EB";
     private const string TableRowEven = "#FFFFFF";
     /// <summary>Rounded corners for panels, table frame, and bottom boxes (QuestPDF points).</summary>
@@ -221,6 +223,8 @@ public static class CommercialDocumentPdfRenderer
                             .FontColor(TtcBlue);
                     });
                 }
+
+                DrawPromoTotal(col, model);
             });
         });
     }
@@ -274,8 +278,7 @@ public static class CommercialDocumentPdfRenderer
                         {
                             var col = model.Columns[i];
                             var cell = t.Cell().Element(c => TableBodyCell(c, bg).ShowEntire());
-                            ApplyAlign(cell, col.Align)
-                                .Text(row[i]).FontSize(TableFontSize).FontColor(TextPrimary);
+                            DrawBodyCellText(ApplyAlign(cell, col.Align), row[i], col.Align);
                         }
 
                         rowIndex++;
@@ -364,4 +367,65 @@ public static class CommercialDocumentPdfRenderer
             .BorderColor(TableBorder)
             .PaddingVertical(8)
             .PaddingHorizontal(TableCellPaddingHorizontal);
+
+    private static void DrawBodyCellText(IContainer cell, string text, PdfTextAlignment align)
+    {
+        if (!PdfPromoCell.TryParse(text, out var struck, out var billed))
+        {
+            cell.Text(text).FontSize(TableFontSize).FontColor(TextPrimary);
+            return;
+        }
+
+        cell.Column(stack =>
+        {
+            stack.Item().Element(c => ApplyAlign(c, align))
+                .Text(struck).FontSize(TableFontSize).FontColor(PromoStruck).Strikethrough();
+            stack.Item().Element(c => ApplyAlign(c, align))
+                .Text(billed).FontSize(TableFontSize).FontColor(PromoFree);
+        });
+    }
+
+    private static void DrawPromoTotal(ColumnDescriptor col, CommercialDocumentPdfModel model)
+    {
+        if (model.PromoTotalTtc is not decimal promo || promo <= 0)
+            return;
+
+        col.Item().PaddingTop(2).Row(r =>
+        {
+            r.RelativeItem().AlignMiddle().Text("Total promo").FontSize(10).FontColor(TextSecondary);
+            r.AutoItem().AlignMiddle().Text($"{promo:N2}")
+                .FontSize(11)
+                .FontColor(PromoStruck)
+                .Strikethrough();
+        });
+        col.Item().AlignRight().Text("0,00")
+            .SemiBold()
+            .FontSize(11)
+            .FontColor(PromoFree);
+    }
+}
+
+internal static class PdfPromoCell
+{
+    private const string Prefix = "\u001eP";
+    private const char Sep = '\u001f';
+
+    public static string Encode(string struck, string billed) => $"{Prefix}{struck}{Sep}{billed}";
+
+    public static bool TryParse(string text, out string struck, out string billed)
+    {
+        struck = "";
+        billed = "";
+        if (!text.StartsWith(Prefix, StringComparison.Ordinal))
+            return false;
+
+        var rest = text[Prefix.Length..];
+        var i = rest.IndexOf(Sep);
+        if (i < 0)
+            return false;
+
+        struck = rest[..i];
+        billed = rest[(i + 1)..];
+        return true;
+    }
 }

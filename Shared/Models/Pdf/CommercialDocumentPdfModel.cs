@@ -13,6 +13,8 @@ public sealed class CommercialDocumentPdfModel
     public decimal TotalHt { get; init; }
     public decimal TotalTva { get; init; }
     public decimal TotalTtc { get; init; }
+    /// <summary>Catalog TTC given away on promo lines (shown struck through above 0 in the totals box).</summary>
+    public decimal? PromoTotalTtc { get; init; }
     /// <summary>When false (Montant TTC column hidden in UI), totals box shows only HT; amount-in-words uses HT.</summary>
     public bool ShowTaxAndTtcInTotalsBox { get; init; } = true;
     public string Devise { get; init; } = "DH";

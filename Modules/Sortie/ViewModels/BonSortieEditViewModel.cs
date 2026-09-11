@@ -129,6 +129,7 @@ public partial class BonSortieEditViewModel : BaseViewModel
     [ObservableProperty] private string _totalTvaLabel = string.Empty;
     [ObservableProperty] private string _totalTtcLabel = string.Empty;
     [ObservableProperty] private string _promoTotalLabel = string.Empty;
+    [ObservableProperty] private string _lblTotalPromo = "Total promo";
     [ObservableProperty] private bool _hasPromo;
     [ObservableProperty] private string _montantPayeLine = string.Empty;
     private decimal _promoTotalTtc;
@@ -193,6 +194,7 @@ public partial class BonSortieEditViewModel : BaseViewModel
         LblCatalogHintFacture = _locale.T("Lbl_CatalogHintFacture");
         LblCatalogHintPromo = _locale.T("Lbl_CatalogHintPromo");
         LblTotals = _locale.T("Lbl_Totals");
+        LblTotalPromo = _locale.T("Doc_TotalPromo");
         LblPaymentsRecorded = _locale.T("Lbl_PaymentsRecorded");
         LblMontant = _locale.T("Lbl_Montant");
         LblPaymentDate = _locale.T("Lbl_PaymentDate");
