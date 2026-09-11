@@ -59,6 +59,8 @@ public static class DependencyInjection
         services.AddSingleton<IFactureFournisseurBrLinkService, FactureFournisseurBrLinkService>();
         services.AddSingleton<IFactureFournisseurWorkflowService, FactureFournisseurWorkflowService>();
         services.AddSingleton<IClientAccountStatementService, ClientAccountStatementService>();
+        services.AddSingleton<IClientBulkPaymentService, ClientBulkPaymentService>();
+        services.AddSingleton<ISupplierBulkPaymentService, SupplierBulkPaymentService>();
         services.AddSingleton<ISupplierAccountStatementService, SupplierAccountStatementService>();
         services.AddSingleton<IFactureWorkflowService, FactureWorkflowService>();
         services.AddSingleton<IBonSortieWorkflowService, BonSortieWorkflowService>();

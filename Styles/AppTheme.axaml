@@ -404,6 +404,34 @@
     <Setter Property="CornerRadius" Value="10"/>
   </Style>
 
+  <!-- CalendarDatePicker: same gray border as the other fields (default theme border is black) -->
+  <Style Selector="CalendarDatePicker">
+    <Setter Property="Background" Value="{DynamicResource CourseraSurfaceBrush}"/>
+    <Setter Property="BorderBrush" Value="{DynamicResource CourseraBorderBrush}"/>
+    <Setter Property="BorderThickness" Value="1"/>
+    <Setter Property="CornerRadius" Value="8"/>
+    <Setter Property="MinHeight" Value="36"/>
+    <Setter Property="Padding" Value="8,4"/>
+    <Setter Property="Foreground" Value="{DynamicResource CourseraTextBrush}"/>
+  </Style>
+  <Style Selector="CalendarDatePicker /template/ TextBox#PART_TextBox">
+    <Setter Property="Background" Value="Transparent"/>
+    <Setter Property="BorderBrush" Value="Transparent"/>
+    <Setter Property="BorderThickness" Value="0"/>
+    <Setter Property="MinHeight" Value="0"/>
+    <Setter Property="CornerRadius" Value="0"/>
+    <Setter Property="Padding" Value="8,4"/>
+  </Style>
+  <Style Selector="CalendarDatePicker /template/ Button#PART_Button">
+    <Setter Property="Background" Value="Transparent"/>
+    <Setter Property="BorderBrush" Value="Transparent"/>
+    <Setter Property="BorderThickness" Value="0"/>
+    <Setter Property="MinHeight" Value="0"/>
+    <Setter Property="MinWidth" Value="32"/>
+    <Setter Property="Padding" Value="6,0"/>
+    <Setter Property="CornerRadius" Value="0"/>
+  </Style>
+
   <!-- DatePicker: match other inputs (gray border) and avoid huge default stretch -->
   <Style Selector="DatePicker">
     <Setter Property="HorizontalAlignment" Value="Left"/>

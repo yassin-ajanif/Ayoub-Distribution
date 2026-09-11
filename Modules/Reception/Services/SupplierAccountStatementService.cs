@@ -77,6 +77,40 @@ public sealed class SupplierAccountStatementService : ISupplierAccountStatementS
                 0));
         }
 
+        var bonsAchat = await db.BonsAchat.AsNoTracking()
+            .Where(b => b.FournisseurId == fournisseurId)
+            .Select(b => new
+            {
+                b.Id,
+                b.Numero,
+                b.Date,
+                b.TotalTtc,
+                Paiements = b.Paiements!.Select(p => new
+                {
+                    p.Id,
+                    p.Date,
+                    p.Montant,
+                    p.Mode,
+                    p.Reference
+                }).ToList()
+            })
+            .ToListAsync(cancellationToken);
+
+        foreach (var b in bonsAchat)
+        {
+            var ttc = b.TotalTtc;
+            if (ttc <= 0) continue;
+
+            entries.Add((
+                b.Date.Date,
+                ClientAccountEntryKind.BonSortie,
+                b.Id,
+                _locale.Tf("SupplierLedger_BonAchatFmt", b.Numero),
+                string.Empty,
+                ttc,
+                0));
+        }
+
         foreach (var a in avoirs)
         {
             var lignes = a.Lignes.Select(l => new BonRetourFournisseurLigne
@@ -103,6 +137,23 @@ public sealed class SupplierAccountStatementService : ISupplierAccountStatementS
         foreach (var f in factures)
         {
             foreach (var p in f.Paiements)
+            {
+                if (p.Montant <= 0 || p.Mode == ModePaiement.Credit) continue;
+                var observation = string.IsNullOrWhiteSpace(p.Reference) ? string.Empty : p.Reference.Trim();
+                entries.Add((
+                    p.Date.Date,
+                    ClientAccountEntryKind.Paiement,
+                    p.Id,
+                    PaymentDesignation(p.Mode),
+                    observation,
+                    0,
+                    p.Montant));
+            }
+        }
+
+        foreach (var b in bonsAchat)
+        {
+            foreach (var p in b.Paiements)
             {
                 if (p.Montant <= 0 || p.Mode == ModePaiement.Credit) continue;
                 var observation = string.IsNullOrWhiteSpace(p.Reference) ? string.Empty : p.Reference.Trim();
