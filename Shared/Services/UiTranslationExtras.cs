@@ -71,7 +71,7 @@ internal static class UiTranslationExtras
         ["Btn_NewBonSortie"] = ("Nouveau", "بون خروج جديد"),
         ["Btn_NewBonAchat"] = ("Nouveau", "بون شراء جديد"),
         ["Btn_NewBonRetour"] = ("Nouveau", "بون رجوع جديد"),
-        ["Wm_SearchBonRetourList"] = ("Rechercher n°, client, facture, motif…", "بحث برقم، عميل، فاتورة، سبب…"),
+        ["Wm_SearchBonRetourList"] = ("Rechercher n°, vendeur, motif…", "بحث برقم، بائع، سبب…"),
         ["Btn_BackList"] = ("Retour liste", "العودة للقائمة"),
         ["Btn_FilterDate"] = ("Filtrer par date", "تصفية حسب التاريخ"),
 

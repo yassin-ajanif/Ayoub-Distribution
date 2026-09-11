@@ -63,7 +63,7 @@ public partial class BonRetourListViewModel : BaseViewModel
     [ObservableProperty] private string _colNumero = string.Empty;
     [ObservableProperty] private string _colClient = string.Empty;
     [ObservableProperty] private string _colDate = string.Empty;
-    [ObservableProperty] private string _colFacture = string.Empty;
+    [ObservableProperty] private string _colStatut = string.Empty;
     [ObservableProperty] private string _colMotif = string.Empty;
     [ObservableProperty] private string _colHt = string.Empty;
     [ObservableProperty] private string _colTtc = string.Empty;
@@ -81,7 +81,7 @@ public partial class BonRetourListViewModel : BaseViewModel
         ColNumero = _locale.T("DevisList_ColRef");
         ColClient = _locale.T("Lbl_Client");
         ColDate = _locale.T("DevisList_ColDate");
-        ColFacture = _locale.T("DocList_ColFacture");
+        ColStatut = _locale.T("Brt_ColStatut");
         ColMotif = _locale.T("Lbl_Motif");
         ColHt = _locale.T("DevisList_ColHt");
         ColTtc = _locale.T("DevisList_ColTtc");
@@ -118,9 +118,7 @@ public partial class BonRetourListViewModel : BaseViewModel
             var joined = from a in db.BonsRetour.AsNoTracking().Include(a => a.Lignes)
                          join t in db.Tiers.AsNoTracking() on a.ClientId equals t.Id into tj
                          from t in tj.DefaultIfEmpty()
-                         join f in db.Factures.AsNoTracking() on a.FactureId equals f.Id into fj
-                         from f in fj.DefaultIfEmpty()
-                         select new { a, nom = t != null ? t.Nom : string.Empty, factNum = f != null ? f.Numero : string.Empty };
+                         select new { a, nom = t != null ? t.Nom : string.Empty };
 
             var joinedQ = joined.AsQueryable();
             if (_dateFrom.HasValue)
@@ -134,7 +132,6 @@ public partial class BonRetourListViewModel : BaseViewModel
                 joinedQ = joinedQ.Where(x =>
                     EF.Functions.Like(x.a.Numero, $"%{search}%")
                     || EF.Functions.Like(x.nom, $"%{search}%")
-                    || EF.Functions.Like(x.factNum, $"%{search}%")
                     || EF.Functions.Like(x.a.Motif ?? string.Empty, $"%{search}%"));
             }
 
@@ -143,13 +140,22 @@ public partial class BonRetourListViewModel : BaseViewModel
                 .OrderByDescending(x => x.a.Date)
                 .Skip(Pagination.Skip)
                 .Take(Pagination.PageSize)
-                .Select(x => new { x.a, x.nom, x.factNum })
+                .Select(x => new { x.a, x.nom })
                 .ToListAsync(cancellationToken);
+
+            var brtIds = rows.Select(r => r.a.Id).ToList();
+            var linked = await db.BonsRetourFournisseurs.AsNoTracking()
+                .Where(b => b.BonRetourId != null && brtIds.Contains(b.BonRetourId.Value))
+                .Select(b => new { Id = b.BonRetourId!.Value, b.Numero })
+                .ToListAsync(cancellationToken);
+            var linkedByBrt = linked
+                .GroupBy(x => x.Id)
+                .ToDictionary(g => g.Key, g => g.First().Numero);
 
             var selId = Selected?.BonRetour.Id;
             Items.Clear();
             foreach (var r in rows)
-                Items.Add(BonRetourListRow.Create(r.a, r.nom, r.factNum, devise, _locale));
+                Items.Add(BonRetourListRow.Create(r.a, r.nom, linkedByBrt.GetValueOrDefault(r.a.Id), devise, _locale));
             Pagination.TotalCount = total;
             if (selId is { } id)
                 Selected = Items.FirstOrDefault(i => i.BonRetour.Id == id);
