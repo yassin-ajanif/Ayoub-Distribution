@@ -18,10 +18,18 @@ public partial class BonSortieLineRow : ObservableObject
     [ObservableProperty] private decimal _remise;
     [ObservableProperty] private decimal _tauxTva;
     [ObservableProperty] private bool _isPromo;
+    [ObservableProperty] private decimal _prixCatalogueHt;
 
     public decimal MontantHt => DocumentTotalsHelper.LigneHT(Quantite, PrixUnitaireHt, Remise);
 
     public decimal MontantTtc => MontantHt * (1 + TauxTva / 100m);
+
+    public decimal MontantCatalogueHt => DocumentTotalsHelper.LigneHT(Quantite, PrixCatalogueHt, 0);
+    public decimal MontantCatalogueTtc => MontantCatalogueHt * (1 + TauxTva / 100m);
+
+    public string PromoPuLabel => PrixCatalogueHt.ToString("0.##");
+    public string PromoMontantHtLabel => MontantCatalogueHt.ToString("N2");
+    public string PromoMontantTtcLabel => MontantCatalogueTtc.ToString("N2");
 
     /// <summary>Designation stored on the document (includes promo marker when needed).</summary>
     public string DesignationForPersist
@@ -39,6 +47,7 @@ public partial class BonSortieLineRow : ObservableObject
     partial void OnPrixUnitaireHtChanged(decimal value) => NotifyMontants();
     partial void OnRemiseChanged(decimal value) => NotifyMontants();
     partial void OnTauxTvaChanged(decimal value) => NotifyMontants();
+    partial void OnPrixCatalogueHtChanged(decimal value) => NotifyMontants();
 
     public void ApplyCatalogProduct(Produit p)
     {
@@ -57,6 +66,7 @@ public partial class BonSortieLineRow : ObservableObject
         ApplyCatalogProduct(p);
         IsPromo = true;
         Designation = StripPromoSuffix(p.Designation);
+        PrixCatalogueHt = p.PrixVenteHT;
         PrixUnitaireHt = 0;
         Remise = 0;
         NotifyMontants();
@@ -80,5 +90,10 @@ public partial class BonSortieLineRow : ObservableObject
     {
         OnPropertyChanged(nameof(MontantHt));
         OnPropertyChanged(nameof(MontantTtc));
+        OnPropertyChanged(nameof(MontantCatalogueHt));
+        OnPropertyChanged(nameof(MontantCatalogueTtc));
+        OnPropertyChanged(nameof(PromoPuLabel));
+        OnPropertyChanged(nameof(PromoMontantHtLabel));
+        OnPropertyChanged(nameof(PromoMontantTtcLabel));
     }
 }

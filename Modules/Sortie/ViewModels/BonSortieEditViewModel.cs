@@ -128,7 +128,10 @@ public partial class BonSortieEditViewModel : BaseViewModel
     [ObservableProperty] private string _totalHtLabel = string.Empty;
     [ObservableProperty] private string _totalTvaLabel = string.Empty;
     [ObservableProperty] private string _totalTtcLabel = string.Empty;
+    [ObservableProperty] private string _promoTotalLabel = string.Empty;
+    [ObservableProperty] private bool _hasPromo;
     [ObservableProperty] private string _montantPayeLine = string.Empty;
+    private decimal _promoTotalTtc;
     [ObservableProperty] private string _lblPaymentsRecorded = string.Empty;
     [ObservableProperty] private string _lblMontant = string.Empty;
     [ObservableProperty] private string _lblPaymentDate = string.Empty;
@@ -222,6 +225,7 @@ public partial class BonSortieEditViewModel : BaseViewModel
         TotalHtLabel = _locale.Tf("Doc_FmtHt", TotalHt, Devise).TrimEnd();
         TotalTvaLabel = _locale.Tf("Doc_FmtTva", TotalTva, Devise).TrimEnd();
         TotalTtcLabel = _locale.Tf("Doc_FmtTtc", TotalTtc, Devise).TrimEnd();
+        PromoTotalLabel = $"{_promoTotalTtc:N2} {Devise}";
         MontantPayeLine = _locale.Tf("Doc_FmtPaye", MontantPaye);
     }
 
@@ -408,12 +412,25 @@ public partial class BonSortieEditViewModel : BaseViewModel
         var product = await LoadProductPricingAsync(produitId);
         if (product is null) return;
 
-        var row = new BonSortieLineRow();
-        row.ApplyPromoCatalogProduct(product);
-        row.Quantite = 1;
-        row.PropertyChanged += LineChanged;
-        Lignes.Add(row);
-        SelectedLine = row;
+        var existing = Lignes.FirstOrDefault(l => l.IsPromo && l.ProduitId == product.Id && product.Id != 0);
+        if (existing != null)
+        {
+            existing.Quantite += 1;
+            existing.PrixUnitaireHt = 0;
+            existing.PrixCatalogueHt = product.PrixVenteHT;
+            existing.Remise = 0;
+            existing.TauxTva = product.TauxTVA;
+            SelectedLine = existing;
+        }
+        else
+        {
+            var row = new BonSortieLineRow();
+            row.ApplyPromoCatalogProduct(product);
+            row.Quantite = 1;
+            row.PropertyChanged += LineChanged;
+            Lignes.Add(row);
+            SelectedLine = row;
+        }
         RefreshTotals();
     }
 
@@ -439,7 +456,7 @@ public partial class BonSortieEditViewModel : BaseViewModel
 
     private void ConsolidateDuplicateProductLines()
     {
-        foreach (var g in Lignes.Where(l => !l.IsPromo && l.ProduitId != 0).GroupBy(l => l.ProduitId).ToList())
+        foreach (var g in Lignes.Where(l => l.ProduitId != 0).GroupBy(l => (l.ProduitId, l.IsPromo)).ToList())
         {
             if (g.Count() < 2) continue;
             var ordered = g.OrderBy(l => Lignes.IndexOf(l)).ToList();
@@ -470,6 +487,8 @@ public partial class BonSortieEditViewModel : BaseViewModel
         TotalHt = ht;
         TotalTva = tva;
         TotalTtc = ttc;
+        _promoTotalTtc = Lignes.Where(l => l.IsPromo).Sum(l => l.MontantCatalogueTtc);
+        HasPromo = Lignes.Any(l => l.IsPromo);
         UpdateBonSortieTotalLines();
         RefreshSuggestedPaiementMontant();
     }
@@ -563,6 +582,7 @@ public partial class BonSortieEditViewModel : BaseViewModel
                 Conditionnement = l.Conditionnement,
                 Quantite = l.Quantite,
                 PrixUnitaireHt = l.PrixUnitaireHT,
+                PrixCatalogueHt = BonSortieLineRow.LooksLikePromo(l.Designation) ? prod?.PrixVenteHT ?? 0 : 0,
                 Remise = l.Remise,
                 TauxTva = l.TauxTVA,
                 IsPromo = BonSortieLineRow.LooksLikePromo(l.Designation)
@@ -570,6 +590,7 @@ public partial class BonSortieEditViewModel : BaseViewModel
             Lignes.Add(row);
         }
 
+        ConsolidateDuplicateProductLines();
         HookLines();
         MontantPaye = f.Paiements.Sum(p => p.Montant);
         ReloadPaiementsList(f.Paiements);

@@ -172,12 +172,36 @@
               <TextBlock Grid.Column="8" Text="{Binding LblDocColMontantTtc}" FontWeight="SemiBold" VerticalAlignment="Center" HorizontalAlignment="Right" IsVisible="{Binding LineGridColumns.ShowMontantTtc}"/>
             </Grid>
           </Border>
-          <ListBox Grid.Row="1" ItemsSource="{Binding Lignes}" SelectedItem="{Binding SelectedLine}" MinHeight="200"
+          <ListBox x:Name="LinesList" Grid.Row="1" ItemsSource="{Binding Lignes}" SelectedItem="{Binding SelectedLine}" MinHeight="200"
                    BorderThickness="1" BorderBrush="{DynamicResource CourseraBorderBrush}" CornerRadius="0,0,8,8"
-                   Background="{DynamicResource CourseraSurfaceBrush}">
+                   Background="{DynamicResource CourseraSurfaceBrush}"
+                   ContainerPrepared="OnLineContainerPrepared"
+                   ContainerClearing="OnLineContainerClearing">
+            <ListBox.Styles>
+              <Style Selector="ListBoxItem.promo">
+                <Setter Property="Background" Value="#ECFDF5"/>
+                <Setter Property="FocusAdorner" Value="{x:Null}"/>
+              </Style>
+              <Style Selector="ListBoxItem.promo /template/ ContentPresenter#PART_ContentPresenter">
+                <Setter Property="Background" Value="#ECFDF5"/>
+              </Style>
+              <Style Selector="ListBoxItem.promo:pointerover /template/ ContentPresenter#PART_ContentPresenter">
+                <Setter Property="Background" Value="#D1FAE5"/>
+              </Style>
+              <Style Selector="ListBoxItem.promo:selected /template/ ContentPresenter#PART_ContentPresenter">
+                <Setter Property="Background" Value="#A7F3D0"/>
+              </Style>
+              <Style Selector="ListBoxItem.promo:selected:focus /template/ ContentPresenter#PART_ContentPresenter">
+                <Setter Property="Background" Value="#6EE7B7"/>
+              </Style>
+              <Style Selector="ListBoxItem.promo:selected:pointerover /template/ ContentPresenter#PART_ContentPresenter">
+                <Setter Property="Background" Value="#6EE7B7"/>
+              </Style>
+            </ListBox.Styles>
             <ListBox.ItemTemplate>
               <DataTemplate DataType="vm:BonSortieLineRow">
-                <Border Padding="6,2" BorderBrush="#18000000" BorderThickness="0,0,0,1">
+                <Border Padding="6,2" BorderBrush="#18000000" BorderThickness="0,0,0,1"
+                        Background="Transparent">
                   <Grid MinHeight="34">
                     <Grid.ColumnDefinitions>
                       <ColumnDefinition Width="{Binding $parent[UserControl].((vm:BonSortieEditViewModel)DataContext).LineGridColumns.ColRef}"/>
@@ -216,16 +240,42 @@
                                    HorizontalAlignment="Stretch" Margin="0,0,8,0" IsEnabled="{Binding $parent[UserControl].((vm:BonSortieEditViewModel)DataContext).CanEditDraft}" IsVisible="{Binding $parent[UserControl].((vm:BonSortieEditViewModel)DataContext).LineGridColumns.ShowQuantite}"/>
                     <TextBox Grid.Column="3" Text="{Binding Conditionnement}" Watermark="{Binding $parent[UserControl].((vm:BonSortieEditViewModel)DataContext).WmDocLineUnite}" Padding="6,4" Margin="0,0,8,0"
                              IsReadOnly="{Binding !$parent[UserControl].((vm:BonSortieEditViewModel)DataContext).CanEditDraft}" IsVisible="{Binding $parent[UserControl].((vm:BonSortieEditViewModel)DataContext).LineGridColumns.ShowConditionnement}"/>
-                    <NumericUpDown Grid.Column="4" ShowButtonSpinner="False" Value="{Binding PrixUnitaireHt}" FormatString="0.##" Minimum="0" Increment="0.01"
-                                   HorizontalAlignment="Stretch" Margin="0,0,8,0" IsEnabled="{Binding $parent[UserControl].((vm:BonSortieEditViewModel)DataContext).CanEditDraft}" IsVisible="{Binding $parent[UserControl].((vm:BonSortieEditViewModel)DataContext).LineGridColumns.ShowPuHt}"/>
+                    <Grid Grid.Column="4" Margin="0,0,8,0" VerticalAlignment="Center"
+                          IsVisible="{Binding $parent[UserControl].((vm:BonSortieEditViewModel)DataContext).LineGridColumns.ShowPuHt}">
+                      <NumericUpDown ShowButtonSpinner="False" Value="{Binding PrixUnitaireHt}" FormatString="0.##" Minimum="0" Increment="0.01"
+                                     HorizontalAlignment="Stretch"
+                                     IsEnabled="{Binding $parent[UserControl].((vm:BonSortieEditViewModel)DataContext).CanEditDraft}"
+                                     IsVisible="{Binding !IsPromo}"/>
+                      <StackPanel Spacing="0" IsVisible="{Binding IsPromo}">
+                        <TextBlock Text="{Binding PromoPuLabel}" TextDecorations="Strikethrough" FontSize="11"
+                                   HorizontalAlignment="Right" Foreground="#DC2626"/>
+                        <TextBlock Text="0" FontWeight="SemiBold" HorizontalAlignment="Right" Foreground="#166534"/>
+                      </StackPanel>
+                    </Grid>
                     <NumericUpDown Grid.Column="5" ShowButtonSpinner="False" Value="{Binding Remise}" FormatString="N2" Minimum="0" Maximum="100" Increment="1"
                                    HorizontalAlignment="Stretch" Margin="0,0,8,0" IsEnabled="{Binding $parent[UserControl].((vm:BonSortieEditViewModel)DataContext).CanEditDraft}" IsVisible="{Binding $parent[UserControl].((vm:BonSortieEditViewModel)DataContext).LineGridColumns.ShowRemise}"/>
                     <NumericUpDown Grid.Column="6" ShowButtonSpinner="False" Value="{Binding TauxTva}" FormatString="0.##" Minimum="0" Increment="1"
                                    HorizontalAlignment="Stretch" Margin="0,0,8,0" IsEnabled="{Binding $parent[UserControl].((vm:BonSortieEditViewModel)DataContext).CanEditDraft}" IsVisible="{Binding $parent[UserControl].((vm:BonSortieEditViewModel)DataContext).LineGridColumns.ShowTva}"/>
-                    <TextBlock Grid.Column="7" Text="{Binding MontantHt, StringFormat=\{0:N2\}}" VerticalAlignment="Center"
-                               HorizontalAlignment="Right" Margin="0,0,8,0" Opacity="0.9" IsVisible="{Binding $parent[UserControl].((vm:BonSortieEditViewModel)DataContext).LineGridColumns.ShowMontantHt}"/>
-                    <TextBlock Grid.Column="8" Text="{Binding MontantTtc, StringFormat=\{0:N2\}}" VerticalAlignment="Center"
-                               HorizontalAlignment="Right" Opacity="0.9" IsVisible="{Binding $parent[UserControl].((vm:BonSortieEditViewModel)DataContext).LineGridColumns.ShowMontantTtc}"/>
+                    <Grid Grid.Column="7" Margin="0,0,8,0" VerticalAlignment="Center"
+                          IsVisible="{Binding $parent[UserControl].((vm:BonSortieEditViewModel)DataContext).LineGridColumns.ShowMontantHt}">
+                      <TextBlock Text="{Binding MontantHt, StringFormat=\{0:N2\}}" VerticalAlignment="Center"
+                                 HorizontalAlignment="Right" Opacity="0.9" IsVisible="{Binding !IsPromo}"/>
+                      <StackPanel Spacing="0" IsVisible="{Binding IsPromo}">
+                        <TextBlock Text="{Binding PromoMontantHtLabel}" TextDecorations="Strikethrough" FontSize="11"
+                                   HorizontalAlignment="Right" Foreground="#DC2626"/>
+                        <TextBlock Text="0,00" FontWeight="SemiBold" HorizontalAlignment="Right" Foreground="#166534"/>
+                      </StackPanel>
+                    </Grid>
+                    <Grid Grid.Column="8" VerticalAlignment="Center"
+                          IsVisible="{Binding $parent[UserControl].((vm:BonSortieEditViewModel)DataContext).LineGridColumns.ShowMontantTtc}">
+                      <TextBlock Text="{Binding MontantTtc, StringFormat=\{0:N2\}}" VerticalAlignment="Center"
+                                 HorizontalAlignment="Right" Opacity="0.9" IsVisible="{Binding !IsPromo}"/>
+                      <StackPanel Spacing="0" IsVisible="{Binding IsPromo}">
+                        <TextBlock Text="{Binding PromoMontantTtcLabel}" TextDecorations="Strikethrough" FontSize="11"
+                                   HorizontalAlignment="Right" Foreground="#DC2626"/>
+                        <TextBlock Text="0,00" FontWeight="SemiBold" HorizontalAlignment="Right" Foreground="#166534"/>
+                      </StackPanel>
+                    </Grid>
                   </Grid>
                 </Border>
               </DataTemplate>
@@ -259,6 +309,15 @@
                        Foreground="#3730A3"
                        HorizontalAlignment="Right"
                        IsVisible="{Binding ShowTotalTtc}"/>
+            <StackPanel Spacing="0" HorizontalAlignment="Right" IsVisible="{Binding HasPromo}">
+              <TextBlock Text="{Binding PromoTotalLabel}"
+                         TextDecorations="Strikethrough"
+                         FontSize="13"
+                         FontWeight="SemiBold"
+                         Foreground="#DC2626"
+                         HorizontalAlignment="Right"/>
+              <TextBlock Text="0,00" FontSize="13" FontWeight="SemiBold" Foreground="#166534" HorizontalAlignment="Right"/>
+            </StackPanel>
             <Border Height="1" Background="#C7D2FE" Margin="0,6,0,0" Opacity="0.6"/>
             <TextBlock Text="{Binding MontantPayeLine}" FontSize="12" Opacity="0.75" HorizontalAlignment="Right"/>
           </StackPanel>
