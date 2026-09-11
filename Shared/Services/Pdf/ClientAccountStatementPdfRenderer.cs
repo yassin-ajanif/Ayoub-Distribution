@@ -91,12 +91,12 @@ public static class ClientAccountStatementPdfRenderer
                     foreach (var row in statement.Rows)
                     {
                         var bg = i % 2 == 1 ? TableRowAlt : "#FFFFFF";
-                        BodyCell(table.Cell().Background(bg), row.Date.ToString("dd/MM/yyyy", Culture));
-                        BodyCell(table.Cell().Background(bg), row.Designation);
-                        BodyCell(table.Cell().Background(bg), row.Observation);
+                        BodyCell(table.Cell().Background(bg), row.IsAllocationDetail ? string.Empty : row.Date.ToString("dd/MM/yyyy", Culture));
+                        BodyCell(table.Cell().Background(bg), row.IsAllocationDetail ? "    " + row.Designation : row.Designation);
+                        BodyCell(table.Cell().Background(bg), row.IsAllocationDetail ? Fmt(row.AllocationAmount) + " " + devise : row.Observation);
                         BodyCell(table.Cell().Background(bg), row.Debit > 0 ? Fmt(row.Debit) : string.Empty, alignRight: true);
                         BodyCell(table.Cell().Background(bg), row.Credit > 0 ? Fmt(row.Credit) : string.Empty, alignRight: true);
-                        BodyCell(table.Cell().Background(bg), Fmt(row.Balance), alignRight: true, bold: true);
+                        BodyCell(table.Cell().Background(bg), row.IsAllocationDetail ? string.Empty : Fmt(row.Balance), alignRight: true, bold: !row.IsAllocationDetail);
                         i++;
                     }
 

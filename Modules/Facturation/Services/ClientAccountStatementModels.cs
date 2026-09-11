@@ -18,6 +18,9 @@ public sealed class ClientAccountStatementRow
     public decimal Debit { get; init; }
     public decimal Credit { get; init; }
     public decimal Balance { get; init; }
+    /// <summary>Breakdown line under a grouped payment. Does not change the balance.</summary>
+    public bool IsAllocationDetail { get; init; }
+    public decimal AllocationAmount { get; init; }
 }
 
 public sealed class ClientAccountStatementResult

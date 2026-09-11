@@ -327,12 +327,12 @@ public partial class TiersDetailViewModel : BaseViewModel
         {
             LedgerRows.Add(new ClientLedgerDisplayRow
             {
-                DateText = row.Date.ToString("dd/MM/yyyy"),
-                Designation = row.Designation,
-                Observation = row.Observation,
+                DateText = row.IsAllocationDetail ? string.Empty : row.Date.ToString("dd/MM/yyyy"),
+                Designation = row.IsAllocationDetail ? "    " + row.Designation : row.Designation,
+                Observation = row.IsAllocationDetail ? FormatAmount(row.AllocationAmount) : row.Observation,
                 DebitText = row.Debit > 0 ? FormatAmount(row.Debit) : string.Empty,
                 CreditText = row.Credit > 0 ? FormatAmount(row.Credit) : string.Empty,
-                BalanceText = FormatAmount(row.Balance)
+                BalanceText = row.IsAllocationDetail ? string.Empty : FormatAmount(row.Balance)
             });
         }
 

@@ -5,6 +5,7 @@ using GestionCommerciale.Shared.Database;
 using GestionCommerciale.Shared.Helpers;
 using GestionCommerciale.Shared.Services;
 using Microsoft.EntityFrameworkCore;
+using System.Globalization;
 
 namespace GestionCommerciale.Modules.FactureFournisseur.Services;
 
@@ -41,7 +42,7 @@ public sealed class SupplierAccountStatementService : ISupplierAccountStatementS
             })
             .ToListAsync(cancellationToken);
 
-        var entries = new List<(DateTime Date, ClientAccountEntryKind Kind, long TieBreakId, string Designation, string Observation, decimal Debit, decimal Credit)>();
+        var entries = new List<(DateTime Date, ClientAccountEntryKind Kind, long TieBreakId, string Designation, string Observation, decimal Debit, decimal Credit, int? GroupeId)>();
 
         var bonsAchat = await db.BonsAchat.AsNoTracking()
             .Where(b => b.FournisseurId == fournisseurId)
@@ -75,7 +76,8 @@ public sealed class SupplierAccountStatementService : ISupplierAccountStatementS
                 _locale.Tf("SupplierLedger_BonAchatFmt", b.Numero),
                 string.Empty,
                 ttc,
-                0));
+                0,
+                null));
         }
 
         foreach (var a in avoirs)
@@ -98,7 +100,8 @@ public sealed class SupplierAccountStatementService : ISupplierAccountStatementS
                 _locale.Tf("SupplierLedger_BonRetourFmt", a.Numero),
                 observation,
                 0,
-                ttc));
+                ttc,
+                null));
         }
 
         foreach (var b in bonsAchat)
@@ -115,9 +118,18 @@ public sealed class SupplierAccountStatementService : ISupplierAccountStatementS
                     PaymentDesignation(p.Mode),
                     observation,
                     0,
-                    p.Montant));
+                    p.Montant,
+                    null));
             }
         }
+
+        var sliceRows = await (
+            from p in db.PaiementsBonAchat.AsNoTracking()
+            join b in db.BonsAchat.AsNoTracking() on p.BonAchatId equals b.Id
+            where p.ReglementGroupeId != null && b.FournisseurId == fournisseurId && p.Montant > 0
+            select new { GroupeId = p.ReglementGroupeId!.Value, b.Numero, p.Montant }
+        ).ToListAsync(cancellationToken);
+        var allocations = ReglementAllocationLines.ByGroup(sliceRows.Select(s => (s.GroupeId, s.Numero, s.Montant)));
 
         var groupes = await db.ReglementsGroupes.AsNoTracking()
             .Where(g => g.TiersId == fournisseurId && g.Sens == SensReglement.Reglement && g.Montant > 0)
@@ -134,7 +146,8 @@ public sealed class SupplierAccountStatementService : ISupplierAccountStatementS
                 PaymentDesignation(g.Mode),
                 observation,
                 0,
-                g.Montant));
+                g.Montant,
+                g.Id));
         }
 
         var ordered = entries
@@ -159,6 +172,26 @@ public sealed class SupplierAccountStatementService : ISupplierAccountStatementS
                 Credit = e.Credit,
                 Balance = balance
             });
+
+            if (e.GroupeId is int groupeId
+                && allocations.TryGetValue(groupeId, out var docs)
+                && docs.Count > 1)
+            {
+                foreach (var doc in docs)
+                {
+                    rows.Add(new ClientAccountStatementRow
+                    {
+                        Date = e.Date,
+                        Kind = ClientAccountEntryKind.Paiement,
+                        TieBreakId = groupeId,
+                        Designation = _locale.Tf("SupplierLedger_BonAchatFmt", doc.Numero),
+                        Observation = doc.Amount.ToString("N2", CultureInfo.GetCultureInfo("fr-FR")),
+                        AllocationAmount = doc.Amount,
+                        IsAllocationDetail = true,
+                        Balance = balance
+                    });
+                }
+            }
         }
 
         return new ClientAccountStatementResult
