@@ -424,9 +424,9 @@ public partial class BonRetourFournisseurEditViewModel : BaseViewModel
     [RelayCommand]
     private async Task SaveAsync(CancellationToken cancellationToken)
     {
-        if (!Lignes.Any())
+        if (FournisseurId == 0 || !Lignes.Any())
         {
-            await _dialog.ShowErrorAsync(_locale.T("Brf_Title"), _locale.T("Brf_ErrLines"), cancellationToken);
+            await _dialog.ShowErrorAsync(_locale.T("Brf_Title"), _locale.T("Brf_ErrFournisseurLines"), cancellationToken);
             return;
         }
 

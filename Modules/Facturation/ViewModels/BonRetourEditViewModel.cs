@@ -461,9 +461,9 @@ public partial class BonRetourEditViewModel : BaseViewModel
     private async Task SaveAsync(CancellationToken cancellationToken)
     {
         if (!_session.CanAccessBonRetour) return;
-        if (!Lignes.Any())
+        if (ClientId == 0 || !Lignes.Any())
         {
-            await _dialog.ShowErrorAsync(_locale.T("Brt_Title"), _locale.T("Brt_ErrLines"), cancellationToken);
+            await _dialog.ShowErrorAsync(_locale.T("Brt_Title"), _locale.T("Brt_ErrClientLines"), cancellationToken);
             return;
         }
 
