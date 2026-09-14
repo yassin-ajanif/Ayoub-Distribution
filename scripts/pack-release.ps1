@@ -1,5 +1,5 @@
 $ErrorActionPreference = "Stop"
-$Version = "1.1.0"
+$Version = "1.0.0"
 $env:PATH = "$env:USERPROFILE\.dotnet\tools;$env:PATH"
 $ProjectRoot = Split-Path -Parent $PSScriptRoot
 $PublishDir = Join-Path $ProjectRoot "publish"
@@ -18,7 +18,7 @@ try {
 
     vpk pack `
         --packId Sonlighting.GestionCommerciale `
-        --packTitle "Solighting" `
+        --packTitle "REGRAG DISTR" `
         --packVersion $Version `
         --packDir $PublishDir `
         --mainExe GestionCommerciale.exe `

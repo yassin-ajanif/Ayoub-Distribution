@@ -325,7 +325,7 @@ internal static class UiTranslationExtras
         ["SupplierLedger_BulkPayErrNone"] = ("Aucun document à régler pour ce fournisseur.", "لا توجد وثائق للدفع لهذا المورد."),
         ["Brt_DraftPlaceholder"] = ("(brouillon)", "(مسودة)"),
 
-        ["Login_AppTitle"] = ("Solighting", "Solighting"),
+        ["Login_AppTitle"] = ("REGRAG DISTR", "REGRAG DISTR"),
         ["Login_Subtitle"] = ("Connexion", "تسجيل الدخول"),
         ["Users_FormHint"] = ("Nouvel utilisateur ou modifier la sélection", "مستخدم جديد أو تعديل المحدد"),
 
