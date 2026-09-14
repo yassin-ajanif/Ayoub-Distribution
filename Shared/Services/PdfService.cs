@@ -93,7 +93,7 @@ public sealed class PdfService : IPdfService
         if (doc.RemiseGlobale > 0)
             docLines.Add(new("Remise globale", $"{doc.RemiseGlobale:N2} %"));
 
-        var model = BaseModel(cfg, "BON DE SORTIE", docLines, PartyLines(party, "Vendeur"), cols, rows, totals, doc.Note, vis.ShowMontantTtc, promoTotalTtc > 0 ? promoTotalTtc : null);
+        var model = BaseModel(cfg, "BON DE SORTIE", docLines, PartyLines(party, "الموزع"), cols, rows, totals, doc.Note, vis.ShowMontantTtc, promoTotalTtc > 0 ? promoTotalTtc : null);
         return CommercialDocumentPdfRenderer.Render(model, TryLoadLogoBytes(cfg.SocieteLogoPath));
     }
 

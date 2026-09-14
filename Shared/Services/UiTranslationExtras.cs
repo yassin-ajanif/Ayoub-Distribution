@@ -81,7 +81,7 @@ internal static class UiTranslationExtras
         ["Pag_Last"] = ("Dernier", "الأخير"),
         ["Pag_Items"] = ("{0} éléments", "{0} عناصر"),
 
-        ["Lbl_Client"] = ("Vendeur", "البائع"),
+        ["Lbl_Client"] = ("Vendeur", "الموزع"),
         ["Lbl_Supplier"] = ("Fournisseur", "المورد"),
         ["Lbl_Date"] = ("Date", "التاريخ"),
         ["Lbl_Expired"] = ("Expiré", "منتهي"),
@@ -183,7 +183,7 @@ internal static class UiTranslationExtras
         ["Pos_LabelRemisePct"] = ("Remise %", "خصم %"),
         ["Pos_LabelRemiseMontant"] = ("Remise montant", "خصم مبلغ"),
         ["Wm_SearchTiers"] = ("Recherche", "بحث"),
-        ["Wm_SearchClient"] = ("Rechercher un vendeur…", "ابحث عن بائع…"),
+        ["Wm_SearchClient"] = ("Rechercher un vendeur…", "ابحث عن موزع…"),
         ["Wm_SearchMovementClient"] = ("Filtrer par client ou fournisseur…", "تصفية حسب العميل أو المورد…"),
         ["Wm_SearchSupplier"] = ("Rechercher un fournisseur…", "ابحث عن مورد…"),
         ["Wm_RefExample"] = ("Ex. ART-001", "مثال ART-001"),

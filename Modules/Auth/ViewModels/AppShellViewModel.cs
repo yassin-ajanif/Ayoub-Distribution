@@ -129,16 +129,77 @@ public partial class AppShellViewModel : BaseViewModel
     }
 
     [ObservableProperty] private bool _venteNavExpanded = true;
-    [ObservableProperty] private bool _achatNavExpanded = true;
-    [ObservableProperty] private bool _footerNavExpanded = true;
+    [ObservableProperty] private bool _achatNavExpanded;
+    [ObservableProperty] private bool _footerNavExpanded;
+    private bool _suppressNavAccordion;
 
     public string VenteNavArrow => VenteNavExpanded ? "\u25BC" : "\u25B6";
     public string AchatNavArrow => AchatNavExpanded ? "\u25BC" : "\u25B6";
     public string FooterNavArrow => FooterNavExpanded ? "\u25BC" : "\u25B6";
 
-    partial void OnVenteNavExpandedChanged(bool value) => OnPropertyChanged(nameof(VenteNavArrow));
-    partial void OnAchatNavExpandedChanged(bool value) => OnPropertyChanged(nameof(AchatNavArrow));
-    partial void OnFooterNavExpandedChanged(bool value) => OnPropertyChanged(nameof(FooterNavArrow));
+    partial void OnVenteNavExpandedChanged(bool value)
+    {
+        OnPropertyChanged(nameof(VenteNavArrow));
+        if (value && !_suppressNavAccordion)
+            CollapseOtherNavSections(except: 0);
+    }
+
+    partial void OnAchatNavExpandedChanged(bool value)
+    {
+        OnPropertyChanged(nameof(AchatNavArrow));
+        if (value && !_suppressNavAccordion)
+            CollapseOtherNavSections(except: 1);
+    }
+
+    partial void OnFooterNavExpandedChanged(bool value)
+    {
+        OnPropertyChanged(nameof(FooterNavArrow));
+        if (value && !_suppressNavAccordion)
+            CollapseOtherNavSections(except: 2);
+    }
+
+    private void CollapseOtherNavSections(int except)
+    {
+        _suppressNavAccordion = true;
+        try
+        {
+            if (except != 0) VenteNavExpanded = false;
+            if (except != 1) AchatNavExpanded = false;
+            if (except != 2) FooterNavExpanded = false;
+        }
+        finally
+        {
+            _suppressNavAccordion = false;
+        }
+    }
+
+    private void ExpandNavSectionForCurrentPage()
+    {
+        var p = _workspace.CurrentPage;
+        var section = 0;
+        if (p is TiersListViewModel tl && tl.Scope == TiersListScope.Fournisseurs
+            || p is TiersDetailViewModel td && td.ListScope == TiersListScope.Fournisseurs
+            || p is BonAchatListViewModel or BonAchatEditViewModel
+            || p is BonRetourFournisseurListViewModel or BonRetourFournisseurEditViewModel
+            || p is ChargeListViewModel or ChargeEditViewModel)
+            section = 1;
+        else if (p is StockMainViewModel or ProduitsViewModel)
+            section = 2;
+        else if (p is HomeViewModel or ReportsListViewModel or SettingsViewModel)
+            return;
+
+        _suppressNavAccordion = true;
+        try
+        {
+            VenteNavExpanded = section == 0;
+            AchatNavExpanded = section == 1;
+            FooterNavExpanded = section == 2;
+        }
+        finally
+        {
+            _suppressNavAccordion = false;
+        }
+    }
 
     [RelayCommand]
     private void ToggleVenteNav() => VenteNavExpanded = !VenteNavExpanded;
@@ -265,5 +326,6 @@ public partial class AppShellViewModel : BaseViewModel
         IsNavProduitsActive = p is ProduitsViewModel;
         IsNavReportsActive = p is ReportsListViewModel;
         IsNavSettingsActive = p is SettingsViewModel;
+        ExpandNavSectionForCurrentPage();
     }
 }
