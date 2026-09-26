@@ -119,6 +119,7 @@ internal static class UiTranslationExtras
         ["Lbl_CatalogHintPromo"] = ("Produit promo — gratuit (promo)", "منتج ترويجي مجاني (promo)"),
         ["Lbl_CatalogHintDevis"] = ("Choisir un produit du catalogue (réf. et prix vente / TVA seront appliqués)", "اختر منتجاً من الكتالوج (المرجع وسعر البيع والضريبة)"),
         ["Lbl_CatalogHintBonRetour"] = ("Choisir un produit du catalogue (réf., prix vente HT et TVA seront appliqués)", "اختر منتجاً من الكتالوج (المرجع وسعر البيع والضريبة يُطبَّقان)"),
+        ["Lbl_CatalogHintBonAchat"] = ("Choisir un produit du catalogue (réf., prix achat HT et TVA seront appliqués)", "اختر منتجاً من الكتالوج (المرجع وسعر الشراء والضريبة يُطبَّقان)"),
         ["Devis_LblAddProduct"] = ("Ajouter un article", "إضافة صنف"),
         ["Devis_WmSearchProduct"] = ("Rechercher par référence ou nom…", "البحث بالمرجع أو الاسم…"),
         ["Lbl_Note"] = ("Note", "ملاحظة"),

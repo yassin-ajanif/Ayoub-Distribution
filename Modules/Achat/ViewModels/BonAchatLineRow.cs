@@ -30,7 +30,7 @@ public partial class BonAchatLineRow : ObservableObject
         Reference = p.Reference;
         Designation = p.Designation;
         Conditionnement = p.Unite;
-        PrixUnitaireHt = p.PrixVenteHT;
+        PrixUnitaireHt = p.PrixAchatHT;
         TauxTva = p.TauxTVA;
         NotifyMontants();
     }

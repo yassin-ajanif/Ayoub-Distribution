@@ -183,7 +183,7 @@ public partial class BonAchatEditViewModel : BaseViewModel
         LblDateFacture = _locale.T("Lbl_DateFacture");
         LblDateEcheance = _locale.T("Lbl_DateEcheance");
         BtnRemoveLine = _locale.T("Btn_RemoveLine");
-        LblCatalogHintFacture = _locale.T("Lbl_CatalogHintFacture");
+        LblCatalogHintFacture = _locale.T("Lbl_CatalogHintBonAchat");
         LblTotals = _locale.T("Lbl_Totals");
         LblPaymentsRecorded = _locale.T("Lbl_PaymentsRecorded");
         LblMontant = _locale.T("Lbl_Montant");
@@ -541,7 +541,7 @@ public partial class BonAchatEditViewModel : BaseViewModel
             Designation = p?.Designation ?? string.Empty,
             Conditionnement = p?.Unite ?? string.Empty,
             Quantite = 1,
-            PrixUnitaireHt = p?.PrixVenteHT ?? 0,
+            PrixUnitaireHt = p?.PrixAchatHT ?? 0,
             Remise = 0,
             TauxTva = p?.TauxTVA ?? 20
         };
