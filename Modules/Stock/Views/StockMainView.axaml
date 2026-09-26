@@ -3,6 +3,7 @@
              xmlns:vm="using:GestionCommerciale.Modules.Stock.ViewModels"
              xmlns:m="using:GestionCommerciale.Modules.Stock.Models"
              xmlns:conv="using:GestionCommerciale.Shared.Converters"
+             xmlns:helpers="using:GestionCommerciale.Shared.Helpers"
              xmlns:shared="using:GestionCommerciale.Shared.Views"
              x:Class="GestionCommerciale.Modules.Stock.Views.StockMainView"
              x:DataType="vm:StockMainViewModel">
@@ -37,10 +38,10 @@
                     <TextBlock Text="{Binding Reference}" VerticalAlignment="Center"/>
                     <TextBlock Grid.Column="1" Text="{Binding Designation}" TextTrimming="CharacterEllipsis"
                                VerticalAlignment="Center" Margin="8,0,0,0"/>
-                    <TextBlock Grid.Column="2" Text="{Binding StockActuel, StringFormat={}{0:N2}}"
+                    <TextBlock Grid.Column="2" Text="{Binding StockActuel, Converter={x:Static helpers:StockQuantityConverter.Instance}}"
                                TextAlignment="Right" VerticalAlignment="Center"
                                Foreground="{Binding ., Converter={x:Static conv:StockMinForegroundConverter.Instance}}"/>
-                    <TextBlock Grid.Column="3" Text="{Binding StockMinimum, StringFormat={}{0:N2}}"
+                    <TextBlock Grid.Column="3" Text="{Binding StockMinimum, Converter={x:Static helpers:StockQuantityConverter.Instance}}"
                                TextAlignment="Right" VerticalAlignment="Center" Opacity="0.85"/>
                   </Grid>
                 </DataTemplate>
@@ -116,11 +117,11 @@
                       <TextBlock Text="{Binding UnitPriceDetail}" FontSize="10" Opacity="0.75"
                                  IsVisible="{Binding HasUnitPriceDetail}"/>
                     </StackPanel>
-                    <TextBlock Grid.Column="2" Text="{Binding StockAvant, StringFormat={}{0:N2}}" TextAlignment="Right" VerticalAlignment="Center"/>
+                    <TextBlock Grid.Column="2" Text="{Binding StockAvant, Converter={x:Static helpers:StockQuantityConverter.Instance}}" TextAlignment="Right" VerticalAlignment="Center"/>
                     <TextBlock Grid.Column="3" Text="{Binding QuantiteSignedLabel}" TextAlignment="Right" VerticalAlignment="Center"
                                TextWrapping="NoWrap" Margin="0,0,6,0" FontWeight="SemiBold"
                                Foreground="{Binding SignedQuantite, Converter={x:Static conv:PositiveNegativeForegroundConverter.Instance}}"/>
-                    <TextBlock Grid.Column="4" Text="{Binding StockApres, StringFormat={}{0:N2}}"
+                    <TextBlock Grid.Column="4" Text="{Binding StockApres, Converter={x:Static helpers:StockQuantityConverter.Instance}}"
                                TextAlignment="Right" FontSize="11" VerticalAlignment="Center"/>
                   </Grid>
                 </DataTemplate>

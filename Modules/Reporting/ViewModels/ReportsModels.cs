@@ -1,6 +1,7 @@
 using System;
 using System.Collections.ObjectModel;
 using CommunityToolkit.Mvvm.ComponentModel;
+using GestionCommerciale.Shared.Helpers;
 
 namespace GestionCommerciale.Modules.Reporting.ViewModels;
 
@@ -288,8 +289,8 @@ public sealed class ReportStockMovementRow
         Origine = origine;
         StockApres = stockApres;
         LblDate = date.ToString("g");
-        LblQty = quantite.ToString("N2");
-        LblStockApres = stockApres.ToString("N2");
+        LblQty = StockFormatHelper.Format(quantite);
+        LblStockApres = StockFormatHelper.Format(stockApres);
     }
 
     public DateTime Date { get; }

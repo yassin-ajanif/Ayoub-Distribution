@@ -1,5 +1,5 @@
 using System.ComponentModel.DataAnnotations.Schema;
-using System.Globalization;
+using GestionCommerciale.Shared.Helpers;
 using GestionCommerciale.Shared.Models;
 
 namespace GestionCommerciale.Modules.Stock.Models;
@@ -40,8 +40,7 @@ public class MouvementStock : BaseEntity
         get
         {
             var signed = SignedQuantite;
-            var formatted = Math.Abs(signed).ToString("N2", CultureInfo.CurrentCulture);
-            return signed >= 0 ? $"+{formatted}" : $"-{formatted}";
+            return StockFormatHelper.FormatSigned(signed);
         }
     }
 

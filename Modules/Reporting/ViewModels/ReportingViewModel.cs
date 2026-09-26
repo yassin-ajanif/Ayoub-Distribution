@@ -261,8 +261,8 @@ public partial class ReportingViewModel : BaseViewModel
             stockAlertRows.Add(new ReportStockAlertRow(
                 p.Reference,
                 _locale.Tf("Report_FmtStockDetail",
-                    p.StockActuel.ToString("N2", CultureInfo.CurrentCulture),
-                    p.StockMinimum.ToString("N2", CultureInfo.CurrentCulture))));
+                    StockFormatHelper.Format(p.StockActuel),
+                    StockFormatHelper.Format(p.StockMinimum))));
         }
 
         var actifs = await db.Produits.AsNoTracking().CountAsync(p => p.Actif, ct);

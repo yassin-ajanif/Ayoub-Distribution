@@ -3,6 +3,7 @@
              xmlns:vm="using:GestionCommerciale.Modules.Stock.ViewModels"
              xmlns:m="using:GestionCommerciale.Modules.Stock.Models"
              xmlns:conv="using:GestionCommerciale.Shared.Converters"
+             xmlns:helpers="using:GestionCommerciale.Shared.Helpers"
              xmlns:shared="using:GestionCommerciale.Shared.Views"
              x:Class="GestionCommerciale.Modules.Stock.Views.ProduitsView"
              x:DataType="vm:ProduitsViewModel">
@@ -41,10 +42,10 @@
                   <TextBlock Text="{Binding Reference}" VerticalAlignment="Center" TextTrimming="CharacterEllipsis"/>
                   <TextBlock Grid.Column="1" Text="{Binding Designation}" TextTrimming="CharacterEllipsis"
                              VerticalAlignment="Center" Margin="8,0,0,0"/>
-                  <TextBlock Grid.Column="2" Text="{Binding StockActuel, StringFormat={}{0:N0}}"
+                  <TextBlock Grid.Column="2" Text="{Binding StockActuel, Converter={x:Static helpers:StockQuantityConverter.Instance}}"
                              TextAlignment="Right" VerticalAlignment="Center" FontSize="11"
                              Foreground="{Binding ., Converter={x:Static conv:StockMinForegroundConverter.Instance}}"/>
-                  <TextBlock Grid.Column="3" Text="{Binding StockMinimum, StringFormat={}{0:N0}}"
+                  <TextBlock Grid.Column="3" Text="{Binding StockMinimum, Converter={x:Static helpers:StockQuantityConverter.Instance}}"
                              TextAlignment="Right" VerticalAlignment="Center" FontSize="11" Opacity="0.85"/>
                 </Grid>
               </DataTemplate>
@@ -111,7 +112,7 @@
             </StackPanel>
             <StackPanel Grid.Row="2" Grid.Column="1" Margin="16,6,0,0" Spacing="4">
               <TextBlock Text="{Binding LblStockActuel}" FontWeight="SemiBold" FontSize="12"/>
-              <TextBlock Text="{Binding FicheStockActuel, StringFormat={}{0:N2}}" VerticalAlignment="Center" Padding="4,8"/>
+              <TextBlock Text="{Binding FicheStockActuel, Converter={x:Static helpers:StockQuantityConverter.Instance}}" VerticalAlignment="Center" Padding="4,8"/>
             </StackPanel>
             <StackPanel Grid.Row="3" Margin="0,6,0,0" Spacing="4">
               <TextBlock Text="{Binding LblPrixAchat}" FontWeight="SemiBold" FontSize="12"/>
